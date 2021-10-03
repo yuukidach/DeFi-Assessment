@@ -41,5 +41,9 @@ Aave, MakerDAO, Compound, Liquity, Synthetix, TrueFi
 2. Blockchain oracle
 
 ### References
+
 1. https://arxiv.org/pdf/2106.06389.pdf
 2. https://github.com/aave/protocol-v2/blob/master/aave-v2-whitepaper.pdf
+3. https://www.tandfonline.com/doi/abs/10.2469/faj.v74.n3.2
+4. https://blogs.lse.ac.uk/businessreview/2021/02/05/can-investors-embrace-both-cryptocurrencies-and-esg/
+
