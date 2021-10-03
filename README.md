@@ -4,13 +4,15 @@
 
 ## Evaluated Platforms
 
-Aave, MakerDAO, Compound, Liquity, Synthetix, TrueFi
+Aave (currently in V2), MakerDAO, Compound, Liquity, Synthetix, TrueFi (currently in V4)
 
 ## Data Preparation
 
 ### Smart Contract
 
 1. Launched time
+    The launched time is the time when a certain protocol started running in mainnet.
+    - TrueFi: https://docs.truefi.io/faq/pool#lending-pools-smart-contracts
 2. Number of vulneratbilities
 3. Bug Bounty
     - Aave: https://aave.com/bug-bounty/
@@ -40,7 +42,11 @@ Aave, MakerDAO, Compound, Liquity, Synthetix, TrueFi
 1. Admin key
 2. Blockchain oracle
 
-### References
+## Future Works
+
+- [ ] Automatically check the audit status.
+
+## References
 
 1. https://arxiv.org/pdf/2106.06389.pdf
 2. https://github.com/aave/protocol-v2/blob/master/aave-v2-whitepaper.pdf

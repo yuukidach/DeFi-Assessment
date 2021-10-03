@@ -1,7 +1,7 @@
-contract,address,bounty,audit_public, audit_1yr_2021_10_03
-Aave,0x398eC7346DcD622eDc5ae82352F02bE94C62d119,1,1,1
+contract,address,bounty,audit_public, audit_1yr_2021_10_03,launch_time,block
+Aave,0x398eC7346DcD622eDc5ae82352F02bE94C62d119,1,1,1,1578500586,9241022
 MakerDAO,,1,1,1
-Compound,,1,1,0
+Compound, 0x3FDA67f7583380E67ef93072294a7fAc882FD7E7,1,1,0,1537926507,6400278
 Liquity,,1,1,1
 Synthetix,,1,1,0
-TrueFi,,1,1,1
+TrueFi,0xa1e72267084192Db7387c8CC1328fadE470e4149,1,1,1,1605682163,11280398
