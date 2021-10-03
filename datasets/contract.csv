@@ -1,2 +1,7 @@
-contract,address
-Aave,0x398eC7346DcD622eDc5ae82352F02bE94C62d119
+contract,address,bounty,audit_public, audit_1yr
+Aave,0x398eC7346DcD622eDc5ae82352F02bE94C62d119,1,1,1
+MakerDAO,,1,1,1
+Compound,,1,1,0
+Liquity,,1,1,1
+Synthetix,,1,1,0
+TrueFi,,1,1,1
