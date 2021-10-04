@@ -4,7 +4,7 @@
 
 ## Evaluated Platforms
 
-Aave (currently in V2), MakerDAO, Compound, Liquity, Synthetix, TrueFi (currently in V4)
+Aave (currently in V2), Compound, TrueFi (currently in V4), Cream Finance, Alchemix, dydx.
 
 ## Data Preparation
 
@@ -13,6 +13,7 @@ Aave (currently in V2), MakerDAO, Compound, Liquity, Synthetix, TrueFi (currentl
 1. Launched time
     The launched time is the time when a certain protocol started running in mainnet.
     - TrueFi: https://docs.truefi.io/faq/pool#lending-pools-smart-contracts
+    - dydx: https://github.com/dydxprotocol/solo
 2. Number of vulneratbilities
 3. Bug Bounty
     - Aave: https://aave.com/bug-bounty/
@@ -52,4 +53,5 @@ Aave (currently in V2), MakerDAO, Compound, Liquity, Synthetix, TrueFi (currentl
 2. https://github.com/aave/protocol-v2/blob/master/aave-v2-whitepaper.pdf
 3. https://www.tandfonline.com/doi/abs/10.2469/faj.v74.n3.2
 4. https://blogs.lse.ac.uk/businessreview/2021/02/05/can-investors-embrace-both-cryptocurrencies-and-esg/
+5. https://dyor-crypto.fandom.com/wiki/Alchemix_(ALCX)#Governance
 
