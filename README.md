@@ -35,6 +35,12 @@ Aave (currently in V2), Compound, TrueFi (currently in V4), Cream Finance, Alche
 
 1. Token values
 2. ESG factor
+    - Aave: https://governance.aave.com/c/governance/4
+    - Compound: https://www.comp.xyz/
+    - TrueFi: https://forum.truefi.io/
+    - Cream Finance: https://forum.cream.finance/
+    - Alchemix: https://forum.alchemix.fi/public/
+    - dydx: https://forums.dydx.community/
 3. Lending amount
 4. Borrowing amount
 
