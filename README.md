@@ -60,3 +60,6 @@ Aave (currently in V2), Compound, TrueFi (currently in V4), Cream Finance, Alche
 3. https://www.tandfonline.com/doi/abs/10.2469/faj.v74.n3.2
 4. https://blogs.lse.ac.uk/businessreview/2021/02/05/can-investors-embrace-both-cryptocurrencies-and-esg/
 5. https://dyor-crypto.fandom.com/wiki/Alchemix_(ALCX)#Governance
+6. [Predicting Issue Types on GitHub](https://arxiv.org/pdf/2107.09936.pdf)
+7. [DeepJIT: An End-To-End Deep Learning Framework for Just-In-Time Defect Prediction](https://posl.ait.kyushu-u.ac.jp/~kamei/publications/Thong_MSR2019.pdf)
+8. Are Fix-Inducing Changes a Moving Target? A Longitudinal Case Study of Just-In-Time Defect Prediction
