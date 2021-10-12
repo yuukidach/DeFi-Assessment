@@ -89,6 +89,18 @@ class GitCommit():
         return commits
     
     def get_commit_filenames(self, commit: str) -> list:
+        """ Get changed files in a commit
+
+        Parameters
+        ----------
+        commit : str
+            Commit hash id
+
+        Returns
+        -------
+        list
+            List of files.
+        """
         cmd = f'git --no-pager diff {commit}^ {commit} --name-only'
         output = _run_command(cmd)
         filenames = output.split('\n')
@@ -104,18 +116,29 @@ class GitCommit():
             
             # header will look like @@ -62,0 +63,3 @@
             for header in headers:
-                match = re.match('@@ -(.*) +(.*) @@', header).group(1)
+                match = re.match('@@ (\-.*) (\+.*) @@', header).groups()
 
-                # header looks like @@ -198 +198 @@ if only one line changes
-                if ',' in match:
-                    start, n_lines = match.split(',')
-                else:
-                    start, n_lines = match, '1'
-
-                if int(n_lines) > 0:
-                    fname_lines[fname].append((start, n_lines))
+                changes = []
+                for change in match:
+                    # header looks like @@ -198 +198 @@ if only one line changes
+                    if ',' in change:
+                        start, n_lines = change.split(',')
+                    else:
+                        start, n_lines = change, '1'
+                    changes.append((start, n_lines))
+                
+                fname_lines[fname].append(changes)
         
         return fname_lines
+
+    def blame_lines(commit: str, fname_lines: dict):
+        bug_commits = set()
+        for fname, lines in fname_lines.items():
+            for start, n in lines:
+                cmd = f'git --no-pager blame -L{start},+{n} {commit}^ -- {fname}'
+                output = _run_command(cmd)
+
+                pass
 
 
 if __name__ == '__main__':
