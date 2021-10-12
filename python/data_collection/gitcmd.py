@@ -4,6 +4,8 @@ import re
 from subprocess import check_output
 from collections import defaultdict
 
+__all__ = ['GitCommit']
+
 
 def _run_command(cmd: str) -> str:
     """ run command line and return output
@@ -20,7 +22,6 @@ def _run_command(cmd: str) -> str:
     """
     stdout = check_output(cmd.split()).decode('utf-8').rstrip('\n')
     return stdout
-
 
 
 class GitCommit():
@@ -50,7 +51,7 @@ class GitCommit():
         cmd = f'git clone {self.url} {dir}'
         _run_command(cmd)
             
-    def get_raw_log(self, commit: str = None) -> str:
+    def get_log(self, commit: str = None) -> str:
         """ Collect raw git logs
 
         Parameters
@@ -88,7 +89,7 @@ class GitCommit():
         
         return commits
     
-    def get_commit_filenames(self, commit: str) -> list:
+    def get_changed_filenames(self, commit: str) -> list:
         """ Get changed files in a commit
 
         Parameters
@@ -107,7 +108,21 @@ class GitCommit():
 
         return filenames
     
-    def get_changed_lines(self, commit: str, fnames: list) -> list:
+    def get_changed_lines(self, commit: str, fnames: list) -> dict:
+        """ Get changed lines in a commit
+
+        Parameters
+        ----------
+        commit : str
+            Commit hash id
+        fnames : list
+            List of file names
+
+        Returns
+        -------
+        dict
+            {filename: [(-start, nlines), (+start, n_lines)]}
+        """
         fname_lines = defaultdict(list)
         for fname in fnames:
             cmd = f'git --no-pager diff {commit}^ {commit} -U0 -- {fname}'
@@ -131,19 +146,44 @@ class GitCommit():
         
         return fname_lines
 
-    def blame_lines(commit: str, fname_lines: dict):
-        bug_commits = set()
+    def blame_old_lines(self, commit: str, fname_lines: dict) -> dict:
+        """ Get commit hash ids for changed lines
+
+        Parameters
+        ----------
+        commit : str
+            Current commit hash id
+        fname_lines : dict
+            Dictionary of file names and changed lines
+
+        Returns
+        -------
+        dict
+            {filename: bug_commits}
+        """
+        bug_commits = defaultdict(set)
         for fname, lines in fname_lines.items():
-            for start, n in lines:
+            for item in lines:
+                n = int(item[0][1])
+                # ignore unchanged commits
+                if (n <= 0):
+                    continue
+                start = item[0][0][1:] # ingore '-' signal
                 cmd = f'git --no-pager blame -L{start},+{n} {commit}^ -- {fname}'
                 output = _run_command(cmd)
+                lines = output.split('\n')
+                bug_commits[fname].update([l.split(' ')[0] for l in lines])
 
-                pass
+        return bug_commits
 
 
 if __name__ == '__main__':
     with GitCommit('https://github.com/Synthetixio/synthetix') as gc:
         commits = gc.get_fix_commits()
         # print(commits)
-        files = gc.get_commit_filenames(commits[0])
-        print(gc.get_changed_lines(commits[0], files))
+        files = gc.get_changed_filenames(commits[0])
+        f_l = gc.get_changed_lines(commits[0], files)
+        print(f_l)
+        bug_commits = gc.blame_old_lines(commits[0], f_l)
+        print(bug_commits)
+        
