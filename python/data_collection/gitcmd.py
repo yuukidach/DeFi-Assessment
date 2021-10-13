@@ -1,6 +1,7 @@
 import os
 import tempfile
 import re
+import shlex
 from subprocess import check_output
 from collections import defaultdict
 
@@ -20,7 +21,7 @@ def _run_command(cmd: str) -> str:
     str
         standard output
     """
-    stdout = check_output(cmd.split()).decode('utf-8').rstrip('\n')
+    stdout = check_output(shlex.split(cmd)).decode('utf-8').rstrip('\n')
     return stdout
 
 
@@ -81,7 +82,7 @@ class GitCommit():
             List of commit ids
         """
         cmd = (
-            'git log --all -i --grep BUG --grep FIX --grep ERROR '
+            'git log --all -i --grep BUG --grep "fix " --grep ERROR '
             '--pretty=format:%h'
         )
         output = _run_command(cmd)

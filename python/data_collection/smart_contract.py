@@ -1,8 +1,10 @@
 import logging
 import pandas as pd
 from pathlib import Path
+from tqdm import tqdm
 from gitcmd import GitCommit
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -18,7 +20,8 @@ def create_fix_commit_csv(url: str, csv: Path):
 
     with GitCommit(url) as gc:
         fix_commits = gc.get_fix_commits()
-        for fc in fix_commits:
+        for fc in tqdm(fix_commits):
+            logger.debug(f'fectching bug-fixed data for {fc}...')
             files = gc.get_changed_filenames(fc)
             fname_lines = gc.get_changed_lines(fc, files)
             bug_commits = gc.blame_old_lines(fc, fname_lines)
