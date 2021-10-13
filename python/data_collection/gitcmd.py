@@ -82,7 +82,7 @@ class GitCommit():
             List of commit ids
         """
         cmd = (
-            'git log --all -i --grep BUG --grep "fix " --grep ERROR '
+            'git log --all -i --grep BUG --grep "fix[\W]" --grep ERROR '
             '--pretty=format:%h'
         )
         output = _run_command(cmd)
