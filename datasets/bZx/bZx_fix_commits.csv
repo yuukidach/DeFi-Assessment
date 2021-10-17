@@ -1,0 +1,26 @@
+fix_commit,fname,changed_lines,bug_commits
+77353b3,brownie-config.yaml,"[[('-3', '47'), ('+3', '13')]]",{'^750749e'}
+77353b3,contracts/openzeppelin/Address.sol,"[[('-2', '1'), ('+2', '1')]]",{'^750749e'}
+77353b3,contracts/openzeppelin/Context.sol,"[[('-2', '1'), ('+2', '1')]]",{'^750749e'}
+77353b3,contracts/openzeppelin/Ownable.sol,"[[('-2', '1'), ('+2', '1')]]",{'^750749e'}
+77353b3,contracts/openzeppelin/ReentrancyGuard.sol,"[[('-2', '1'), ('+2', '2')]]",{'^750749e'}
+77353b3,contracts/openzeppelin/SafeERC20.sol,"[[('-2', '1'), ('+2', '1')]]",{'^750749e'}
+77353b3,contracts/openzeppelin/SafeMath.sol,"[[('-2', '1'), ('+2', '1')]]",{'^750749e'}
+77353b3,ethpm-config.yaml,"[[('-1', '27'), ('+0', '0')]]",{'67a7adbe'}
+3ca8a99,contracts/protocoltoken/migrations/VBZRXv2VestingToken.sol,"[[('-1', '203'), ('+0', '0')]]","{'df1e0b79', 'f8b5d63c', 'b3cba00b', 'f4b8bc88', '576ab82c', 'ac43b1a9', '12a8e886'}"
+0423496,requirements.txt,"[[('-1', '2'), ('+1', '1')]]","{'bfe7e67a', 'f4824266'}"
+976e17e,interfaces/IBZx.sol,"[[('-5', '2'), ('+5', '2')]]",{'77353b39'}
+976e17e,interfaces/IPriceFeedsConfig.sol,"[[('-1', '61'), ('+0', '0')]]",{'755c1339'}
+31979aa,requirements.txt,"[[('-1', '1'), ('+1', '1')]]",{'9c406c47'}
+437fbfd,README.md,"[[('-31', '1'), ('+31', '1')]]",{'cc84ca45'}
+437fbfd,contracts/connectors/DAppHelper.sol,"[[('-1', '146'), ('+0', '0')]]",{'bfe7e67a'}
+437fbfd,contracts/connectors/LoanToken/LoanTokenStorage.sol,"[[('-1', '63'), ('+0', '0')]]",{'fb99e3f9'}
+437fbfd,contracts/connectors/arbitrarycaller/ArbitraryCaller.sol,"[[('-1', '25'), ('+0', '0')]]",{'bfe7e67a'}
+437fbfd,contracts/interfaces/ILoanPool.sol,"[[('-1', '14'), ('+0', '0')]]",{'31979aab'}
+437fbfd,contracts/mixins/GasTokenUser.sol,"[[('-1', '43'), ('+0', '0')]]",{'^750749e'}
+437fbfd,contracts/mixins/UnstructuredStorage.sol,"[[('-1', '43'), ('+0', '0')]]",{'77353b39'}
+437fbfd,contracts/modules/ProtocolMigration.sol,"[[('-1', '63'), ('+0', '0')]]","{'fb99e3f9', '31979aab'}"
+437fbfd,requirements.txt,"[[('-1', '1'), ('+1', '1')]]",{'04234962'}
+437fbfd,tests/test_LoanOpenings_borrow.py,"[[('-1', '118'), ('+0', '0')]]","{'9c406c47', 'bfe7e67a', '31979aab', 'f4824266', '77353b39'}"
+45e1787,contracts/farm/Upgradeable.sol,"[[('-1', '13'), ('+0', '0')]]",{'e5d917c4'}
+fc2d5fd,contracts/protocoltoken/migrations/VBZRXv2VestingToken.sol,"[[('-1', '203'), ('+0', '0')]]","{'df1e0b79', 'f8b5d63c', 'b3cba00b', 'f4b8bc88', '576ab82c', 'ac43b1a9', '12a8e886'}"

@@ -1,0 +1,31 @@
+fix_commit,fname,changed_lines,bug_commits
+e6ac08c,contracts/mocks/ClockMock.sol,"[[('-1', '18'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,contracts/mocks/HasClock.sol,"[[('-1', '17'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,contracts/mocks/IClockProvider.sol,"[[('-1', '6'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,contracts/mocks/barnbridge/CompoundProviderMock.sol.REMOVED,"[[('-1', '23'), ('+0', '0')]]","{'^4e3c205', '83ab9fe7'}"
+e6ac08c,contracts/mocks/barnbridge/CompoundProviderMockCompRewardExpected.sol.REMOVED,"[[('-1', '28'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,contracts/mocks/barnbridge/OraclelizedMock.sol.REMOVED,"[[('-1', '62'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,contracts/mocks/barnbridge/SmartYieldForModelMock.sol.REMOVED,"[[('-1', '47'), ('+0', '0')]]","{'^4e3c205', '6a2b956d', '4c457692'}"
+e6ac08c,contracts/mocks/barnbridge/harvest/CompoundProviderMockCompHarvestExpected.sol.REMOVED,"[[('-1', '43'), ('+0', '0')]]",{'6d4b2102'}
+e6ac08c,contracts/mocks/compound-finance/CTokenDumbMock.sol.REMOVED,"[[('-1', '70'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,contracts/mocks/compound-finance/CTokenMock.sol.REMOVED,"[[('-1', '98'), ('+0', '0')]]","{'^4e3c205', 'a5429f1a', '83ab9fe7'}"
+e6ac08c,contracts/mocks/compound-finance/CTokenYieldingMock.sol.REMOVED,"[[('-1', '117'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,contracts/mocks/compound-finance/ComptrollerMock.sol.REMOVED,"[[('-1', '93'), ('+0', '0')]]","{'^4e3c205', '6d4b2102'}"
+e6ac08c,package-lock.json,"[[('-3942', '9'), ('+3941', '0')], [('-3967', '3'), ('+3958', '3')], [('-3972', '1'), ('+3963', '1')], [('-14920', '3'), ('+14911', '3')], [('-14954', '0'), ('+14946', '1')], [('-16726', '0'), ('+16719', '9')], [('-17394', '0'), ('+17396', '6')]]","{'^4e3c205', '27463ca2'}"
+e6ac08c,package.json,"[[('-28', '1'), ('+28', '1')]]",{'^4e3c205'}
+e6ac08c,test-mainnet/harvest.test.ts,"[[('-1', '224'), ('+0', '0')]]","{'6d4b2102', '4c457692', '27463ca2'}"
+e6ac08c,test/bond-gain.test.ts,"[[('-1', '4'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,test/compound-provider/cumulatives.test.ts,"[[('-1', '171'), ('+0', '0')]]",{'a5429f1a'}
+e6ac08c,test/compound-provider/harvest.test.ts,"[[('-1', '519'), ('+0', '0')]]","{'^4e3c205', 'f962afc0', '65ecb089', '83ab9fe7'}"
+e6ac08c,test/compound-provider/setup.test.ts,"[[('-1', '97'), ('+0', '0')]]","{'f962afc0', '066a6df7'}"
+e6ac08c,test/compound-provider/transfer-fees.test.ts,"[[('-1', '147'), ('+0', '0')]]","{'b21be4f6', '70df2091', 'de4303ab', '83ab9fe7'}"
+e6ac08c,test/helpers/jbonds.ts,"[[('-1', '1'), ('+1', '1')]]",{'^4e3c205'}
+e6ac08c,test/helpers/sbonds.ts,"[[('-1', '1'), ('+1', '1')]]",{'^4e3c205'}
+e6ac08c,test/helpers/time.ts,"[[('-1', '1'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,test/jtoken-price.test.ts,"[[('-1', '4'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,test/jtoken-sell.test.ts,"[[('-1', '4'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,test/oracle/oracle.test.ts,"[[('-1', '216'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,test/prices.test.ts.REMOVED,"[[('-1', '136'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,test/prices2.test.ts.REMOVED,"[[('-1', '139'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,test/rates.test.ts.REMOVED,"[[('-1', '119'), ('+0', '0')]]",{'^4e3c205'}
+e6ac08c,test/yield.test.ts,"[[('-1', '4'), ('+0', '0')]]",{'^4e3c205'}
