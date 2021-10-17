@@ -33,17 +33,25 @@ def create_fix_commit_csv(url: str, csv: Path):
                 data['bug_commits'].append(commits)
     
     df =  pd.DataFrame(data)
-    print(df.head(5))
+    df.to_csv(csv, index=False)
         
 
 def create_bug_commit_csv():
     pass
 
 
-def create_contract_datasets(platform: Path, saved_dir: Path):
-    df = pd.read_csv(platform, ingore_index=True)
+def create_contract_datasets(platform_csv: Path, saved_dir: Path):
+    df = pd.read_csv(platform_csv, index_col=False)
+    for _, row in df.iterrows():
+        plat = row['platform']
+        git_addr = row['github_addr']
+        plat_dir = saved_dir / plat
+        plat_dir.mkdir(parents=True, exist_ok=True)
+        create_fix_commit_csv(git_addr, plat_dir / f'{plat}.csv')
+
     
 
 if __name__ == '__main__':
-    create_fix_commit_csv('https://github.com/Synthetixio/synthetix', 'test')
+    create_contract_datasets(Path('/mnt/d/Projects/DeFi-Lending-Evaluation/datasets/platforms.csv'),
+                              Path('/mnt/d/Projects/DeFi-Lending-Evaluation/datasets'))
     

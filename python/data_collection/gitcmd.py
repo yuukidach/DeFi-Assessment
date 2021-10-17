@@ -2,10 +2,13 @@ import os
 import tempfile
 import re
 import shlex
+import logging
 from subprocess import check_output
 from collections import defaultdict
 
 __all__ = ['GitCommit']
+
+logger = logging.getLogger(__name__)
 
 
 def _run_command(cmd: str) -> str:
@@ -51,6 +54,32 @@ class GitCommit():
         """
         cmd = f'git clone {self.url} {dir}'
         _run_command(cmd)
+        
+    def _filter_by_1st_line(self, commits: list, key: str, exist: bool=True):
+        """ Filter commits by the first line of their commit messages
+
+        Parameters
+        ----------
+        commits : list
+            list of commits id
+        key : str
+            keyword to be filterd, ignore case
+        exist : bool, optional
+            leave the commits with keyword in their messages, by default True
+        """
+        key = key.lower()
+        wanted_commits = []
+        logger.info(f'Before filtering "{key}" with status {exist}, '
+                    f'{len(commits)} commits exist.')
+        for commit in commits:
+            cmd = f'git log --oneline {commit} --pretty=format:%s'
+            output = _run_command(cmd).split('\n')[0].lower()
+            if (key in output) == exist:
+                wanted_commits.append(commit)
+        logger.info(f'Now, {len(wanted_commits)} exist.')
+
+        return wanted_commits
+
             
     def get_log(self, commit: str = None) -> str:
         """ Collect raw git logs
@@ -83,21 +112,22 @@ class GitCommit():
         """
         # command to get commit with "fix" in its message
         cmd1 = (
-            'git log --all -i --grep "fix[^a-zA-Z0-9/]" '
+            'git log --all -i --grep "fix" '
             '--pretty=format:%h'
         )
         # get merge commits
         cmd2 = (
-            'git log --all -i --grep merge --invert-grep '
+            'git log --all -i --grep "merge" '
             '--pretty=format:%h'
         )
         fix_commits = _run_command(cmd1)
         merge_commits = _run_command(cmd2)
         # ignore merge commits which will lead to hundreds of changed lines
         commits = set([c for c in fix_commits.split('\n') if c]) \
-                  - set([c for c in merge_commits.split('\n')])
+                  - set([c for c in merge_commits.split('\n') if c])
         
-        return list(commits)
+        commits = self._filter_by_1st_line(list(commits), 'fix')
+        return commits
     
     def get_changed_filenames(self, commit: str) -> list:
         """ Get changed files in a commit
