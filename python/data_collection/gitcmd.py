@@ -81,14 +81,23 @@ class GitCommit():
         list
             List of commit ids
         """
-        cmd = (
-            'git log --all -i --grep BUG --grep "fix[\W]" --grep ERROR '
+        # command to get commit with "fix" in its message
+        cmd1 = (
+            'git log --all -i --grep "fix[^a-zA-Z0-9/]" '
             '--pretty=format:%h'
         )
-        output = _run_command(cmd)
-        commits = [c for c in output.split('\n') if c]
+        # get merge commits
+        cmd2 = (
+            'git log --all -i --grep merge --invert-grep '
+            '--pretty=format:%h'
+        )
+        fix_commits = _run_command(cmd1)
+        merge_commits = _run_command(cmd2)
+        # ignore merge commits which will lead to hundreds of changed lines
+        commits = set([c for c in fix_commits.split('\n') if c]) \
+                  - set([c for c in merge_commits.split('\n')])
         
-        return commits
+        return list(commits)
     
     def get_changed_filenames(self, commit: str) -> list:
         """ Get changed files in a commit

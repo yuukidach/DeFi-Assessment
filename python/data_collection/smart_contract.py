@@ -40,6 +40,10 @@ def create_bug_commit_csv():
     pass
 
 
+def create_contract_datasets(platform: Path, saved_dir: Path):
+    df = pd.read_csv(platform, ingore_index=True)
+    
+
 if __name__ == '__main__':
     create_fix_commit_csv('https://github.com/Synthetixio/synthetix', 'test')
     
