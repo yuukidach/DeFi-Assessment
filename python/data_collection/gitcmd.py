@@ -167,7 +167,7 @@ class GitCommit():
         for fname in fnames:
             cmd = f'git --no-pager diff {commit}^ {commit} -U0 -- {fname}'
             output = _run_command(cmd)
-            headers = [l for l in output.split('\n') if '@@' in l]
+            headers = [l for l in output.split('\n') if re.match(r'^@@.+@@$', l)]
             
             # header will look like @@ -62,0 +63,3 @@
             for header in headers:
