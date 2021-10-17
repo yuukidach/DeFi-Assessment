@@ -142,7 +142,7 @@ class GitCommit():
         list
             List of files.
         """
-        cmd = f'git --no-pager diff {commit}^ {commit} --name-only'
+        cmd = f'git --no-pager diff {commit}^ {commit} --name-only --ignore-submodules'
         output = _run_command(cmd)
         filenames = output.split('\n')
 

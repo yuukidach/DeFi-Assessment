@@ -47,7 +47,13 @@ def create_contract_datasets(platform_csv: Path, saved_dir: Path):
         git_addr = row['github_addr']
         plat_dir = saved_dir / plat
         plat_dir.mkdir(parents=True, exist_ok=True)
-        create_fix_commit_csv(git_addr, plat_dir / f'{plat}.csv')
+        fcsv = plat_dir / f'{plat}_fix_commits.csv'
+
+        if fcsv.exists():
+            logging.info(f'Data exists. Skip collect data {fcsv}.')
+            continue
+        else:
+            create_fix_commit_csv(git_addr, fcsv)
 
     
 
