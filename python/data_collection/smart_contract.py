@@ -2,7 +2,7 @@ import logging
 import pandas as pd
 from pathlib import Path
 from tqdm.auto import tqdm
-from gitcmd import GitCommit
+from .gitcmd import GitCommit
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,7 +40,16 @@ def create_bug_commit_csv():
     pass
 
 
-def create_contract_datasets(platform_csv: Path, saved_dir: Path):
+def create_contract_datasets(platform_csv: Path, 
+                              saved_dir: Path, 
+                              force: bool):
+    """ Create csv datasets for smart contracts.
+
+    Args:
+        platform_csv (Path): path to `platform.csv`
+        saved_dir (Path): where to put newly created csv files
+        force (bool): force to re-collect or not
+    """
     df = pd.read_csv(platform_csv, index_col=False)
     for _, row in df.iterrows():
         plat = row['platform']
@@ -49,15 +58,8 @@ def create_contract_datasets(platform_csv: Path, saved_dir: Path):
         plat_dir.mkdir(parents=True, exist_ok=True)
         fcsv = plat_dir / f'{plat}_fix_commits.csv'
 
-        if fcsv.exists():
+        if fcsv.exists() and not force:
             logging.info(f'Data exists. Skip collect data {fcsv}.')
             continue
         else:
             create_fix_commit_csv(git_addr, fcsv)
-
-    
-
-if __name__ == '__main__':
-    create_contract_datasets(Path('/mnt/d/Projects/DeFi-Lending-Evaluation/datasets/platforms.csv'),
-                              Path('/mnt/d/Projects/DeFi-Lending-Evaluation/datasets'))
-    
