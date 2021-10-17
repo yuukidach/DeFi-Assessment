@@ -102,6 +102,29 @@ class GitCommit():
 
         return output
     
+    def get_commits(self, key: str=None) -> list:
+        """Get list of commmits
+
+        Args:
+            key (str, optional): get commits containing a certain keyword in
+                                 their commit messages. Defaults to None, means
+                                 get all commmits.
+
+        Returns:
+            list: list of commit hash ids
+        """
+        if key is None:
+            cmd = 'git log --all --pretty=format:%h'
+        else:
+            cmd = (
+                f'git log --all -i --grep "{key}" '
+                '--pretty=format:%h'
+            )
+        commits = _run_command(cmd)
+        commits = [c for c in commits.split('\n') if c]
+
+        return commits
+    
     def get_fix_commits(self) -> list:
         """ Get commit ids related to bug fix
 
@@ -110,21 +133,10 @@ class GitCommit():
         list
             List of commit ids
         """
-        # command to get commit with "fix" in its message
-        cmd1 = (
-            'git log --all -i --grep "fix" '
-            '--pretty=format:%h'
-        )
-        # get merge commits
-        cmd2 = (
-            'git log --all -i --grep "merge" '
-            '--pretty=format:%h'
-        )
-        fix_commits = _run_command(cmd1)
-        merge_commits = _run_command(cmd2)
+        fix_commits = self.get_commits('fix')
+        merge_commits = self.get_commits('merge')
         # ignore merge commits which will lead to hundreds of changed lines
-        commits = set([c for c in fix_commits.split('\n') if c]) \
-                  - set([c for c in merge_commits.split('\n') if c])
+        commits = set(fix_commits) - set(merge_commits)
         
         commits = self._filter_by_1st_line(list(commits), 'fix')
         return commits
