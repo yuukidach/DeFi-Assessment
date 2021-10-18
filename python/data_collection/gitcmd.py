@@ -3,6 +3,7 @@ import tempfile
 import re
 import shlex
 import logging
+from typing import Union
 from subprocess import check_output
 from collections import defaultdict
 
@@ -28,6 +29,20 @@ def _run_command(cmd: str) -> str:
     return stdout
 
 
+def _std_commit(commit: str) -> str:
+    """ standardize a single commit id
+
+    Args:
+        commit (str): commit id
+
+    Returns:
+        str: standardized commit id
+    """
+    commit = re.sub(r'\W+', '', commit)
+    commit = commit[:7]
+    return commit
+
+
 class GitCommit():
     def __init__(self, url: str):
         self.url = url
@@ -37,6 +52,7 @@ class GitCommit():
 
     def __enter__(self):
         os.chdir(self.repo_dir.name)
+        self.init_commit = self.get_1st_commits()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -79,7 +95,12 @@ class GitCommit():
         logger.info(f'Now, {len(wanted_commits)} exist.')
 
         return wanted_commits
-
+    
+    @staticmethod
+    def standardize_commit_id(commit: Union[list, str]):
+        if isinstance(commit, str):
+            return _std_commit(commit)
+        return [_std_commit(c) for c in commit]
             
     def get_log(self, commit: str = None) -> str:
         """ Collect raw git logs
@@ -95,7 +116,7 @@ class GitCommit():
             git logs
         """
         if commit is not None:
-            cmd = f'git --no-pager log --stat 1 {commit}'
+            cmd = f'git --no-pager log --stat -1 {commit}'
         else:
             cmd = 'git --no-pager log --stat'
         output = _run_command(cmd)
@@ -122,8 +143,35 @@ class GitCommit():
             )
         commits = _run_command(cmd)
         commits = [c for c in commits.split('\n') if c]
+        commits = self.standardize_commit_id(commits)
 
         return commits
+    
+    def get_1st_commits(self) -> list:
+        # commit repos have more than 1 root commit
+        cmd = f'git rev-list --all --max-parents=0 HEAD'
+        output = _run_command(cmd)
+        commits = [c for c in output.split('\n') if c]
+        return self.standardize_commit_id(commits)
+    
+    def get_msg(self, commit: str) -> str:
+        """Get commit messages
+
+        Args:
+            commit (str): commit id
+
+        Returns:
+            str: messages
+        """
+        cmd = f'git log --format=%B -n 1 {commit}'
+        return _run_command(cmd)
+
+    def get_diff(self, commit: str) -> str:
+        if commit in self.init_commit:
+            return ''
+        cmd = f'git --no-pager diff -U0 {commit}^ {commit}'
+        output = _run_command(cmd)
+        return output
     
     def get_fix_commits(self) -> list:
         """ Get commit ids related to bug fix
@@ -213,7 +261,7 @@ class GitCommit():
         dict
             {filename: bug_commits}
         """
-        bug_commits = defaultdict(set)
+        bug_sets = defaultdict(set)
         for fname, lines in fname_lines.items():
             for item in lines:
                 n = int(item[0][1])
@@ -224,8 +272,11 @@ class GitCommit():
                 cmd = f'git --no-pager blame -L{start},+{n} {commit}^ -- {fname}'
                 output = _run_command(cmd)
                 lines = output.split('\n')
-                bug_commits[fname].update([l.split(' ')[0] for l in lines])
+                bug_sets[fname].update([l.split(' ')[0] for l in lines])
 
+        bug_commits = defaultdict(list)
+        for fname, commits in bug_sets.items():
+            bug_commits[fname] = self.standardize_commit_id(commits)
         return bug_commits
 
 
