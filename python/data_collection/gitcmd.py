@@ -159,9 +159,9 @@ class GitCommit():
         for c in self.init_commit:
             len1, len2= len(c), len(commit)
             if len1 < len2:
-                res &= (c == commit[:len1])
+                res |= (c == commit[:len1])
             else:
-                res &= (c[:len2] == commit)
+                res |= (c[:len2] == commit)
         return res
     
     def get_msg(self, commit: str) -> str:
