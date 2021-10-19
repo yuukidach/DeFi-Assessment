@@ -210,9 +210,9 @@ def get_comments_from_dydx():
 
 
 if __name__ == '__main__':
-    # get_comments_from_aave()
+    get_comments_from_aave()
     get_comments_from_compound()
     get_comments_from_cream()
     get_comments_from_truefi()
-    # get_comments_from_alchemix()
-    # get_comments_from_dydx()
+    get_comments_from_alchemix()
+    get_comments_from_dydx()

@@ -27,5 +27,4 @@ def data_collection(force, contract, csv, sdir):
 cli.add_command(data_collection, 'data')
 
 if __name__ == '__main__':
-    # cli()
-    print('111')
+    cli()
