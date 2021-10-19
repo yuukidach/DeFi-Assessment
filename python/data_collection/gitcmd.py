@@ -39,7 +39,7 @@ def _std_commit(commit: str) -> str:
         str: standardized commit id
     """
     commit = re.sub(r'\W+', '', commit)
-    commit = commit[:7]
+    commit = commit[:8]
     return commit
 
 
@@ -154,6 +154,16 @@ class GitCommit():
         commits = [c for c in output.split('\n') if c]
         return self.standardize_commit_id(commits)
     
+    def is_in_1st_commits(self, commit: str) -> bool:
+        res = False
+        for c in self.init_commit:
+            len1, len2= len(c), len(commit)
+            if len1 < len2:
+                res &= (c == commit[:len1])
+            else:
+                res &= (c[:len2] == commit)
+        return res
+    
     def get_msg(self, commit: str) -> str:
         """Get commit messages
 
@@ -167,7 +177,7 @@ class GitCommit():
         return _run_command(cmd)
 
     def get_diff(self, commit: str) -> str:
-        if commit in self.init_commit:
+        if self.is_in_1st_commits(commit):
             return ''
         cmd = f'git --no-pager diff -U0 {commit}^ {commit}'
         output = _run_command(cmd)
