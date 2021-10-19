@@ -14,7 +14,7 @@ def cli():
 @click.option('--contract/--no-contract', default=True, 
                help='Collect data of smart contracts.')
 @click.option('-c', '--csv', type=click.Path(exists=True), 
-               default=Path(__file__).resolve().parents[1] / 'data/platforms.csv',
+               default=Path(__file__).resolve().parents[1] / 'docs/platforms.csv',
                help='Location of platforms.csv.')
 @click.option('-s', '--sdir', type=click.Path(),
                default=Path(__file__).resolve().parents[1] / 'data/',

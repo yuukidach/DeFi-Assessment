@@ -3,6 +3,7 @@ import tempfile
 import re
 import shlex
 import logging
+from typing import Union
 from subprocess import check_output
 from collections import defaultdict
 
@@ -28,6 +29,20 @@ def _run_command(cmd: str) -> str:
     return stdout
 
 
+def _std_commit(commit: str) -> str:
+    """ standardize a single commit id
+
+    Args:
+        commit (str): commit id
+
+    Returns:
+        str: standardized commit id
+    """
+    commit = re.sub(r'\W+', '', commit)
+    commit = commit[:8]
+    return commit
+
+
 class GitCommit():
     def __init__(self, url: str):
         self.url = url
@@ -37,6 +52,7 @@ class GitCommit():
 
     def __enter__(self):
         os.chdir(self.repo_dir.name)
+        self.init_commit = self.get_1st_commits()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -79,7 +95,12 @@ class GitCommit():
         logger.info(f'Now, {len(wanted_commits)} exist.')
 
         return wanted_commits
-
+    
+    @staticmethod
+    def standardize_commit_id(commit: Union[list, str]):
+        if isinstance(commit, str):
+            return _std_commit(commit)
+        return [_std_commit(c) for c in commit]
             
     def get_log(self, commit: str = None) -> str:
         """ Collect raw git logs
@@ -95,11 +116,71 @@ class GitCommit():
             git logs
         """
         if commit is not None:
-            cmd = f'git --no-pager log --stat 1 {commit}'
+            cmd = f'git --no-pager log --stat -1 {commit}'
         else:
             cmd = 'git --no-pager log --stat'
         output = _run_command(cmd)
 
+        return output
+    
+    def get_commits(self, key: str=None) -> list:
+        """Get list of commmits
+
+        Args:
+            key (str, optional): get commits containing a certain keyword in
+                                 their commit messages. Defaults to None, means
+                                 get all commmits.
+
+        Returns:
+            list: list of commit hash ids
+        """
+        if key is None:
+            cmd = 'git log --all --pretty=format:%h'
+        else:
+            cmd = (
+                f'git log --all -i --grep "{key}" '
+                '--pretty=format:%h'
+            )
+        commits = _run_command(cmd)
+        commits = [c for c in commits.split('\n') if c]
+        commits = self.standardize_commit_id(commits)
+
+        return commits
+    
+    def get_1st_commits(self) -> list:
+        # commit repos have more than 1 root commit
+        cmd = f'git rev-list --all --max-parents=0 HEAD'
+        output = _run_command(cmd)
+        commits = [c for c in output.split('\n') if c]
+        return self.standardize_commit_id(commits)
+    
+    def is_in_1st_commits(self, commit: str) -> bool:
+        res = False
+        for c in self.init_commit:
+            len1, len2= len(c), len(commit)
+            if len1 < len2:
+                res &= (c == commit[:len1])
+            else:
+                res &= (c[:len2] == commit)
+        return res
+    
+    def get_msg(self, commit: str) -> str:
+        """Get commit messages
+
+        Args:
+            commit (str): commit id
+
+        Returns:
+            str: messages
+        """
+        cmd = f'git log --format=%B -n 1 {commit}'
+        return _run_command(cmd)
+
+    def get_diff(self, commit: str) -> str:
+        if self.is_in_1st_commits(commit):
+            return ''
+        cmd = f'git --no-pager diff -U0 {commit}^ {commit}'
+        output = _run_command(cmd)
         return output
     
     def get_fix_commits(self) -> list:
@@ -110,21 +191,10 @@ class GitCommit():
         list
             List of commit ids
         """
-        # command to get commit with "fix" in its message
-        cmd1 = (
-            'git log --all -i --grep "fix" '
-            '--pretty=format:%h'
-        )
-        # get merge commits
-        cmd2 = (
-            'git log --all -i --grep "merge" '
-            '--pretty=format:%h'
-        )
-        fix_commits = _run_command(cmd1)
-        merge_commits = _run_command(cmd2)
+        fix_commits = self.get_commits('fix')
+        merge_commits = self.get_commits('merge')
         # ignore merge commits which will lead to hundreds of changed lines
-        commits = set([c for c in fix_commits.split('\n') if c]) \
-                  - set([c for c in merge_commits.split('\n') if c])
+        commits = set(fix_commits) - set(merge_commits)
         
         commits = self._filter_by_1st_line(list(commits), 'fix')
         return commits
@@ -201,7 +271,7 @@ class GitCommit():
         dict
             {filename: bug_commits}
         """
-        bug_commits = defaultdict(set)
+        bug_sets = defaultdict(set)
         for fname, lines in fname_lines.items():
             for item in lines:
                 n = int(item[0][1])
@@ -212,8 +282,11 @@ class GitCommit():
                 cmd = f'git --no-pager blame -L{start},+{n} {commit}^ -- {fname}'
                 output = _run_command(cmd)
                 lines = output.split('\n')
-                bug_commits[fname].update([l.split(' ')[0] for l in lines])
+                bug_sets[fname].update([l.split(' ')[0] for l in lines])
 
+        bug_commits = defaultdict(list)
+        for fname, commits in bug_sets.items():
+            bug_commits[fname] = self.standardize_commit_id(commits)
         return bug_commits
 
 
