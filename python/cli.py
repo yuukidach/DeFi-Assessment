@@ -1,7 +1,7 @@
 from typing import DefaultDict
 import click
 from pathlib import Path
-from data_collection.smart_contract import create_contract_datasets
+from data_collection.contract import create_contract_datasets
 
 @click.group()
 def cli():

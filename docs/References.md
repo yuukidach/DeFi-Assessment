@@ -63,3 +63,4 @@ Aave (currently in V2), Compound, TrueFi (currently in V4), Cream Finance, Alche
 6. [Predicting Issue Types on GitHub](https://arxiv.org/pdf/2107.09936.pdf)
 7. [DeepJIT: An End-To-End Deep Learning Framework for Just-In-Time Defect Prediction](https://posl.ait.kyushu-u.ac.jp/~kamei/publications/Thong_MSR2019.pdf)
 8. Are Fix-Inducing Changes a Moving Target? A Longitudinal Case Study of Just-In-Time Defect Prediction
+9. [JITLine: A Simpler, Better, Faster, Finer-grained Just-In-Time Defect Prediction](https://arxiv.org/pdf/2103.07068.pdf)
