@@ -328,8 +328,7 @@ class GitCommit():
         if self.is_in_1st_commits(commit):
             return None
         ent = 0.0
-        fnames = self.get_changed_filenames(commit, 'adr')
-        print(fnames)
+        fnames = self.get_changed_filenames(commit, 'ad')
         for fname in fnames:
             # get total number of lines
             cmd = f'git --no-pager show {commit}:{fname}'
@@ -346,6 +345,7 @@ class GitCommit():
             if added == cnt:
                 continue
             ent += -added/cnt*log2(added/cnt)
+        return ent
         
 
 if __name__ == '__main__':
