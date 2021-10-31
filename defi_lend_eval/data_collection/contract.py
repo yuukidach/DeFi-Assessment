@@ -1,5 +1,6 @@
 import logging
 from re import T
+from numpy.lib.function_base import append
 import pandas as pd
 from pathlib import Path
 from functools import reduce
@@ -127,12 +128,15 @@ def create_git_matrix_csv(gc: GitCommit, src_csv: Path, tgt_csv: Path):
         tbar.set_description(f'Create matrix for {commit}')
         la, ld = gc.get_numstat(commit)
         fnames = gc.get_changed_filenames(commit)
+        hset, anset = gc.get_former_commits(commit)
         # print(fnames, nf)
         data['commit'].append(commit)
         data['la'].append(la); data['ld'].append(ld) 
         data['ns'].append(get_num_of_subsys(fnames))
         data['nd'].append(get_num_of_dir(fnames))
         data['nf'].append(len(fnames))
+        data['nuc'].append(len(hset)); data['ndev'].append(len(anset))
+        data['inter'].append(gc.get_aver_interval(commit))
         data['ent'].append(gc.get_entropy(commit))
         data['fix'].append(commit in fix_commits)
         data['buggy'].append(commit in bug_commits)

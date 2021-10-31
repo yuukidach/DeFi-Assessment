@@ -347,6 +347,53 @@ class GitCommit():
             ent += -added/cnt*log2(added/cnt)
         return ent
         
+    def get_former_commits(self, commit: str) -> tuple:
+        """Return proir commits and developers who have changed the files.
+        """
+        if self.is_in_1st_commits(commit):
+            return []
+        hset, anset = set(), set()
+        fnames = self.get_changed_filenames(commit, filter='d')
+        for fname in fnames:
+            cmd = (
+                f'git --no-pager log --pretty=format:%h,%an --follow {commit} ' 
+                f'-- {fname}'
+            )
+            out = _run_command(cmd)
+            lines = [l for l in out.split('\n') if l]
+            for l in lines:
+                l  = l.split(',')
+                h = _std_commit(l[0]); an = l[1]
+                if h == commit:
+                    anset.add(an)
+                else:
+                    hset.add(h); anset.add(an)
+        return hset, anset
+    
+    def get_aver_interval(self, commit: str) -> float:
+        if self.is_in_1st_commits(commit):
+            return 0
+        interval, cnt = 0.0, 0
+        cmd = f'git log --pretty=format:%at -n 1 {commit}'
+        out = _run_command(cmd)
+        x = float(out)
+
+        fnames = self.get_changed_filenames(commit, filter='d')
+        for fname in fnames:
+            cmd = (
+                f'git log --pretty=format:%at -n 1 --skip 1 --follow {commit} '
+                f'-- {fname}'
+            )
+            out = _run_command(cmd)
+            if out is None or len(out) == 0:
+                continue
+            interval += x - float(out)
+            cnt += 1
+            
+        if cnt == 0:
+            return 0.0
+        return interval / cnt / 3600 # turn into hours
+
 
 if __name__ == '__main__':
     with GitCommit('https://github.com/Synthetixio/synthetix') as gc:
