@@ -1,10 +1,11 @@
 import logging
-from typing import ByteString
+from re import T
 import pandas as pd
 from pathlib import Path
 from functools import reduce
 from tqdm.auto import tqdm
-from .gitcmd import GitCommit
+from git_tool.gitcmd import GitCommit
+from git_tool.parser import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,7 +20,17 @@ def _do_all_data_exist(paths: list) -> bool:
     Returns:
         bool: true or false
     """
-    return reduce(lambda x, y: x.exists() & y.exists(), paths)
+    return reduce(lambda x, y: x & y.exists(), paths, True)
+
+
+def _get_all_simple_commits(gc: GitCommit):
+    """Get all commits except merge and initial commits
+    """
+    all_commits = gc.get_commits()
+    merge_commits = gc.get_commits('merge')
+    # remove merge commits which contain too many changes
+    all_commits = set(all_commits) - set(merge_commits) - set(gc.init_commit)
+    return list(all_commits)
 
 
 def create_fix_commit_csv(gc: GitCommit, csv: Path):
@@ -72,11 +83,8 @@ def get_buggy_commits_from_fix_csv(csv: Path) -> list:
     return list(buggy_commits)
 
 
-def create_bug_commit_csv(gc: GitCommit, src_csv: Path, tgt_json: Path):
-    all_commits = gc.get_commits()
-    merge_commits = gc.get_commits('merge')
-    # remove merge commits which contain too many changes
-    all_commits = set(all_commits) - set(merge_commits) - set(gc.init_commit)
+def create_bug_commit_json(gc: GitCommit, src_csv: Path, tgt_json: Path):
+    all_commits = _get_all_simple_commits(gc)
     bug_commits = get_buggy_commits_from_fix_csv(src_csv)
 
     logger.info(f'Number of total commits: {len(all_commits)}')
@@ -99,6 +107,39 @@ def create_bug_commit_csv(gc: GitCommit, src_csv: Path, tgt_json: Path):
     
     df = pd.DataFrame(data)
     df.to_json(tgt_json, orient='table')
+    
+
+def create_git_matrix_csv(gc: GitCommit, src_csv: Path, tgt_csv: Path):
+    all_commits = _get_all_simple_commits(gc)
+    fix_commits = gc.get_fix_commits()
+    bug_commits = get_buggy_commits_from_fix_csv(src_csv)
+
+    data = {
+        'commit':[], 'la':[], 'ld':[], 'lt': [],
+        'ns':[], 'nd':[], 'nf':[], 'ent':[],
+        'nuc':[], 'ndev':[], 'inter':[], 
+        'exp':[], 'rexp':[], 'sexp':[], 'pos':[],
+        'fix':[], 'buggy':[]
+    }
+    
+    tbar = tqdm(all_commits); cnt = 0
+    for commit in tbar:
+        tbar.set_description(f'Create matrix for {commit}')
+        la, ld = gc.get_numstat(commit)
+        fnames = gc.get_changed_filenames(commit)
+        # print(fnames, nf)
+        data['commit'].append(commit)
+        data['la'].append(la); data['ld'].append(ld) 
+        data['ns'].append(get_num_of_subsys(fnames))
+        data['nd'].append(get_num_of_dir(fnames))
+        data['nf'].append(len(fnames))
+        data['ent'].append(gc.get_entropy(commit))
+        data['fix'].append(commit in fix_commits)
+        data['buggy'].append(commit in bug_commits)
+        cnt += 1
+        if cnt > 2:
+            print(data)
+            exit(0)
 
 
 def create_contract_datasets(platform_csv: Path, 
@@ -119,8 +160,9 @@ def create_contract_datasets(platform_csv: Path,
         plat_dir.mkdir(parents=True, exist_ok=True)
         fcsv = plat_dir / f'{plat}_fix_commits.csv'
         bjson = plat_dir / f'{plat}_buggy_commits.json'
+        mcsv = plat_dir / f'{plat}_matrix.csv'
 
-        if _do_all_data_exist([fcsv, bjson]) and not force:
+        if _do_all_data_exist([fcsv, bjson, mcsv]) and not force:
             logger.info(f'All files related to {plat} smart contract exist.')
             continue
         
@@ -133,6 +175,10 @@ def create_contract_datasets(platform_csv: Path,
             
             if force or not bjson.exists():
                 logger.info(f'Get buggy commits data from {plat}')
-                create_bug_commit_csv(gc, fcsv, bjson)
+                create_bug_commit_json(gc, fcsv, bjson)
             else:
                 logger.info(f'Data exists. Skip collect data {bjson}')
+                
+            if force or not mcsv.exists():
+                logger.info(f'Get git matrixes from {plat}')
+                create_git_matrix_csv(gc, fcsv, mcsv)

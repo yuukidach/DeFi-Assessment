@@ -40,18 +40,66 @@ def del_changes_of_file(fname: str, lines: str):
 
 
 def clean_lines(lines: str):
+    """Only keep deleted and added lines
+
+    Parameters
+    ----------
+    lines : str
+        full git log
+
+    Returns
+    -------
+    git log with only deleted and added lines in it
+    """
     lines = lines.split('\n')
     l2rm = []
     for idx, line in enumerate(lines):
-        if re.match(r'^(?!\+).*') and re.match(r'^(?!-).*'):
-           l2rm.append(idx)
+        if (re.match(r'^(?!\+).*', line) and re.match(r'^(?!-).*', line)) \
+           or re.match(r'^\+\+\+ .*', line) \
+           or re.match(r'^--- .*', line):
+            l2rm.append(idx)
+            
+    l2rm = sorted(l2rm, reverse=True)
+    for idx in l2rm:
+        if idx < len(lines):
+            lines.pop(idx)
+    return '\n'.join(lines)
 
+
+def split_changes(lines: str):
+    """Split changes as deletions and addition
+
+    Parameters
+    ----------
+    lines : str
+        lines only contains deletion and addtion
+
+    Returns
+    -------
+    deletion, addition
+    """
+    lines = lines.split('\n')
+    del_lines, add_lines = [], []
+    for line in lines:
+        if re.match(r'^-.*', line):
+            del_lines.append(line)
+        elif re.match(r'^\+.*', line):
+            add_lines.append(line)
+
+    del_lines = '\n'.join(del_lines)
+    add_lines = '\n'.join(add_lines)
+    return del_lines, add_lines
 
 
 def pre_process_data(fname: Path):
     df = pd.read_json(fname, orient='table')
+    lines = df['changes'][0]
     lines = del_changes_of_file('package-lock.json', lines)
-    print(lines)
+    lines = clean_lines(lines)
+    print(lines[:1000])
+    d, a = split_changes(lines)
+    print(a[:500])
+    print(d[:500])
 
 
 if __name__ == '__main__':

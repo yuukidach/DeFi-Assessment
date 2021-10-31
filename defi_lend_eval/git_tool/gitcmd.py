@@ -3,9 +3,11 @@ import tempfile
 import re
 import shlex
 import logging
-from typing import Union
+from typing import List, Union
 from subprocess import check_output
 from collections import defaultdict
+
+from numpy import log2
 
 __all__ = ['GitCommit']
 
@@ -199,7 +201,7 @@ class GitCommit():
         commits = self._filter_by_1st_line(list(commits), 'fix')
         return commits
     
-    def get_changed_filenames(self, commit: str) -> list:
+    def get_changed_filenames(self, commit: str, filter: str=None) -> list:
         """ Get changed files in a commit
 
         Parameters
@@ -207,12 +209,20 @@ class GitCommit():
         commit : str
             Commit hash id
 
+        filter : str
+            Filter files. See `man git diff` for help
+
         Returns
         -------
         list
             List of files.
         """
-        cmd = f'git --no-pager diff {commit}^ {commit} --name-only --ignore-submodules'
+        cmd = (
+            f'git --no-pager diff {commit}^ {commit} --name-only '
+            f'--ignore-submodules'
+        )
+        if filter is not None:
+            cmd += f' --diff-filter={filter}'
         output = _run_command(cmd)
         filenames = output.split('\n')
 
@@ -288,7 +298,55 @@ class GitCommit():
         for fname, commits in bug_sets.items():
             bug_commits[fname] = self.standardize_commit_id(commits)
         return bug_commits
+    
+    def get_numstat(self, commit: str) -> list:
+        """ Return short stats of the commit
 
+        Parameters
+        ----------
+        commit : str
+            commit id 
+
+        Returns
+        -------
+        list
+            [number of changed files, insertions, deletions]
+        """
+        if self.is_in_1st_commits(commit):
+            return None
+        res = [0 , 0]
+        cmd = f'git diff --numstat {commit}^ {commit}'
+        out = _run_command(cmd)
+        for line in out.split('\n'):
+            cnt = re.match(r'^(\d+).+(\d+)', line)
+            if cnt is not None:
+                res[0] += int(cnt.group(1))
+                res[1] += int(cnt.group(2))
+        return res
+    
+    def get_entropy(self, commit: str) -> float:
+        if self.is_in_1st_commits(commit):
+            return None
+        ent = 0.0
+        fnames = self.get_changed_filenames(commit, 'adr')
+        print(fnames)
+        for fname in fnames:
+            # get total number of lines
+            cmd = f'git --no-pager show {commit}:{fname}'
+            out = _run_command(cmd)
+            cnt = out.count('\n') + 1
+
+            # get inserted lines
+            cmd = f'git diff --numstat {commit}^ {commit} -- {fname}'
+            out = _run_command(cmd)
+            added = re.search(r'\d+', out)
+            if added is None:
+                continue
+            added = int(added.group())
+            if added == cnt:
+                continue
+            ent += -added/cnt*log2(added/cnt)
+        
 
 if __name__ == '__main__':
     with GitCommit('https://github.com/Synthetixio/synthetix') as gc:
