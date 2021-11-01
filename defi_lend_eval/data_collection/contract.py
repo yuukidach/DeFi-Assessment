@@ -30,8 +30,8 @@ def _get_all_simple_commits(gc: GitCommit):
     all_commits = gc.get_commits()
     merge_commits = gc.get_commits('merge')
     # remove merge commits which contain too many changes
-    all_commits = set(all_commits) - set(merge_commits) - set(gc.init_commit)
-    return list(all_commits)
+    all_commits = set(all_commits) - set(merge_commits)
+    return [c for c in all_commits if not gc.is_in_1st_commits(c)]
 
 
 def create_fix_commit_csv(gc: GitCommit, csv: Path):
@@ -116,34 +116,38 @@ def create_git_matrix_csv(gc: GitCommit, src_csv: Path, tgt_csv: Path):
     bug_commits = get_buggy_commits_from_fix_csv(src_csv)
 
     data = {
-        'commit':[], 'la':[], 'ld':[], 'lt': [],
+        'commit':[], 'la':[], 'ld':[],
         'ns':[], 'nd':[], 'nf':[], 'ent':[],
         'nuc':[], 'ndev':[], 'inter':[], 
-        'exp':[], 'rexp':[], 'sexp':[], 'pos':[],
+        'exp':[], 'rexp':[], 'sexp':[], 'pod':[],
         'fix':[], 'buggy':[]
     }
     
-    tbar = tqdm(all_commits); cnt = 0
+    tbar= tqdm(all_commits)
     for commit in tbar:
         tbar.set_description(f'Create matrix for {commit}')
         la, ld = gc.get_numstat(commit)
         fnames = gc.get_changed_filenames(commit)
         hset, anset = gc.get_former_commits(commit)
-        # print(fnames, nf)
+        
         data['commit'].append(commit)
         data['la'].append(la); data['ld'].append(ld) 
-        data['ns'].append(get_num_of_subsys(fnames))
-        data['nd'].append(get_num_of_dir(fnames))
+        data['ns'].append(len(get_subsys(fnames)))
+        data['nd'].append(len(get_dir(fnames)))
         data['nf'].append(len(fnames))
         data['nuc'].append(len(hset)); data['ndev'].append(len(anset))
         data['inter'].append(gc.get_aver_interval(commit))
         data['ent'].append(gc.get_entropy(commit))
+        data['exp'].append(len(gc.get_author_exp(commit)))
+        data['rexp'].append(gc.get_author_recent_exp(commit))
+        data['sexp'].append(gc.get_author_subssys_exp(commit))
+        data['pod'].append(gc.get_author_proportion(commit))
         data['fix'].append(commit in fix_commits)
         data['buggy'].append(commit in bug_commits)
-        cnt += 1
-        if cnt > 2:
-            print(data)
-            exit(0)
+    
+    df =  pd.DataFrame(data)
+    df.to_csv(tgt_csv, index=False)
+    
 
 
 def create_contract_datasets(platform_csv: Path, 

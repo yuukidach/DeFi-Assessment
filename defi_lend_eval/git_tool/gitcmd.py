@@ -1,13 +1,15 @@
 import os
+import subprocess
 import tempfile
 import re
 import shlex
 import logging
 from typing import List, Union
-from subprocess import check_output
+from subprocess import check_output, run
 from collections import defaultdict
-
+from unicodedata import numeric
 from numpy import log2
+from .parser import *
 
 __all__ = ['GitCommit']
 
@@ -27,8 +29,19 @@ def _run_command(cmd: str) -> str:
     str
         standard output
     """
-    stdout = check_output(shlex.split(cmd)).decode('utf-8').rstrip('\n')
+    stdout = check_output(shlex.split(cmd), encoding='utf-8').rstrip('\n')
     return stdout
+
+
+def _run_single_pipeline_commands(cmds: list) -> str:
+    cmd1, cmd2 = cmds[0], cmds[1]
+    ps1 = subprocess.Popen(shlex.split(cmd1), stdout=subprocess.PIPE)
+    stdout = check_output(shlex.split(cmd2),
+                          stdin=ps1.stdout, 
+                          encoding='utf-8').rstrip('\n')
+    ps1.wait()
+    return stdout
+
 
 
 def _std_commit(commit: str) -> str:
@@ -148,6 +161,11 @@ class GitCommit():
         commits = self.standardize_commit_id(commits)
 
         return commits
+   
+    def get_author(self, commit: str) -> str:
+        cmd = f'git log --pretty=format:%an -n 1 {commit}'
+        out = _run_command(cmd)
+        return out
     
     def get_1st_commits(self) -> list:
         # commit repos have more than 1 root commit
@@ -217,6 +235,9 @@ class GitCommit():
         list
             List of files.
         """
+        if self.is_in_1st_commits(commit):
+            return []
+
         cmd = (
             f'git --no-pager diff {commit}^ {commit} --name-only '
             f'--ignore-submodules'
@@ -224,7 +245,7 @@ class GitCommit():
         if filter is not None:
             cmd += f' --diff-filter={filter}'
         output = _run_command(cmd)
-        filenames = output.split('\n')
+        filenames = [f for f in output.split('\n') if f]
 
         return filenames
     
@@ -317,7 +338,7 @@ class GitCommit():
         res = [0 , 0]
         cmd = f'git diff --numstat {commit}^ {commit}'
         out = _run_command(cmd)
-        for line in out.split('\n'):
+        for line in [line for line in out.split('\n') if line]:
             cnt = re.match(r'^(\d+).+(\d+)', line)
             if cnt is not None:
                 res[0] += int(cnt.group(1))
@@ -332,17 +353,17 @@ class GitCommit():
         for fname in fnames:
             # get total number of lines
             cmd = f'git --no-pager show {commit}:{fname}'
-            out = _run_command(cmd)
-            cnt = out.count('\n') + 1
-
+            out = _run_single_pipeline_commands([cmd, f'wc -l'])
+            cnt = int(out)
+            
             # get inserted lines
             cmd = f'git diff --numstat {commit}^ {commit} -- {fname}'
             out = _run_command(cmd)
             added = re.search(r'\d+', out)
-            if added is None:
+            if added is None or cnt == 0:
                 continue
             added = int(added.group())
-            if added == cnt:
+            if added == cnt or added == 0:
                 continue
             ent += -added/cnt*log2(added/cnt)
         return ent
@@ -357,7 +378,7 @@ class GitCommit():
         for fname in fnames:
             cmd = (
                 f'git --no-pager log --pretty=format:%h,%an --follow {commit} ' 
-                f'-- {fname}'
+                f'-- "{fname}"'
             )
             out = _run_command(cmd)
             lines = [l for l in out.split('\n') if l]
@@ -370,29 +391,70 @@ class GitCommit():
                     hset.add(h); anset.add(an)
         return hset, anset
     
+    def get_author_time(self, commit: str, fname: str=None, skip: int=0) -> int:
+        cmd = f'git log --pretty=format:%at -n 1 --skip {skip} {commit}'
+        if fname is not None:
+            cmd += f' --follow -- {fname}'
+        out = _run_command(cmd)
+        if out is None or len(out) == 0:
+            return None
+        return float(out)
+
     def get_aver_interval(self, commit: str) -> float:
         if self.is_in_1st_commits(commit):
             return 0
         interval, cnt = 0.0, 0
-        cmd = f'git log --pretty=format:%at -n 1 {commit}'
-        out = _run_command(cmd)
-        x = float(out)
+        x = self.get_author_time(commit)
 
         fnames = self.get_changed_filenames(commit, filter='d')
         for fname in fnames:
-            cmd = (
-                f'git log --pretty=format:%at -n 1 --skip 1 --follow {commit} '
-                f'-- {fname}'
-            )
-            out = _run_command(cmd)
-            if out is None or len(out) == 0:
+            t = self.get_author_time(commit, fname, 1)
+            if t is None:
                 continue
-            interval += x - float(out)
+            interval += x - float(t)
             cnt += 1
             
         if cnt == 0:
             return 0.0
         return interval / cnt / 3600 # turn into hours
+    
+    def get_author_exp(self, commit: str) -> set:
+        """Get commits made by the same author before
+        """
+        author = self.get_author(commit)
+        cmd = f'git --no-pager log --author="{author}" --pretty=format:%h {commit}^'
+        out = _run_command(cmd)
+        out = [c for c in out.split('\n') if c]
+        out = self.standardize_commit_id(out)
+        return set(out)
+    
+    def get_author_recent_exp(self, commit: str):
+        commits = self.get_author_exp(commit)
+        rexp = 0.0
+        x = self.get_author_time(commit)
+        for c in commits:
+            t = self.get_author_time(c)
+            rexp += 1.0 / (1 + (x-t)/24/7)
+        return rexp
+    
+    def get_author_subssys_exp(self, commit: str):
+        commits = self.get_author_exp(commit)
+        fnames = self.get_changed_filenames(commit, 'rd')
+        subs0 = get_subsys(fnames)
+        cnt = 0
+        for c in commits:
+            fnames = self.get_changed_filenames(c, 'ad')
+            subs = get_subsys(fnames) 
+            if subs0 & subs:
+                cnt += 1
+        return cnt
+    
+    def get_author_proportion(self, commit: str):
+        commits = self.get_author_exp(commit)
+        related_commits, _ = self.get_former_commits(commit)
+        if (len(related_commits) == 0):
+            return 1.0
+        return len(commits & related_commits) / len(related_commits)
 
 
 if __name__ == '__main__':
