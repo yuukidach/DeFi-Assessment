@@ -15,6 +15,7 @@ __all__ = ['GitCommit']
 
 logger = logging.getLogger(__name__)
 
+COMMIT_LEN = 10
 
 def _run_command(cmd: str) -> str:
     """ run command line and return output
@@ -150,11 +151,11 @@ class GitCommit():
             list: list of commit hash ids
         """
         if key is None:
-            cmd = 'git log --all --pretty=format:%h'
+            cmd = f'git log --all --pretty=format:%h --abbrev={COMMIT_LEN}'
         else:
             cmd = (
                 f'git log --all -i --grep "{key}" '
-                '--pretty=format:%h'
+                f'--pretty=format:%h --abbrev={COMMIT_LEN}'
             )
         commits = _run_command(cmd)
         commits = [c for c in commits.split('\n') if c]
@@ -310,7 +311,10 @@ class GitCommit():
                 if (n <= 0):
                     continue
                 start = item[0][0][1:] # ingore '-' signal
-                cmd = f'git --no-pager blame -L{start},+{n} {commit}^ -- {fname}'
+                cmd = (
+                    f'git --no-pager blame -L{start},+{n} --abbrev={COMMIT_LEN} '
+                    f'{commit}^ -- {fname}'
+                )
                 output = _run_command(cmd)
                 lines = output.split('\n')
                 bug_sets[fname].update([l.split(' ')[0] for l in lines])
@@ -377,14 +381,14 @@ class GitCommit():
         fnames = self.get_changed_filenames(commit, filter='d')
         for fname in fnames:
             cmd = (
-                f'git --no-pager log --pretty=format:%h,%an --follow {commit} ' 
-                f'-- "{fname}"'
+                f'git --no-pager log --pretty=format:%h,%an --abbrev={COMMIT_LEN} '
+                f'--follow {commit} -- "{fname}"'
             )
             out = _run_command(cmd)
             lines = [l for l in out.split('\n') if l]
             for l in lines:
                 l  = l.split(',')
-                h = _std_commit(l[0]); an = l[1]
+                h = self.standardize_commit_id(l[0]); an = l[1]
                 if h == commit:
                     anset.add(an)
                 else:
@@ -422,7 +426,10 @@ class GitCommit():
         """Get commits made by the same author before
         """
         author = self.get_author(commit)
-        cmd = f'git --no-pager log --author="{author}" --pretty=format:%h {commit}^'
+        cmd = (
+            f'git --no-pager log --author="{author}" --abbrev={COMMIT_LEN} '
+            f'--pretty=format:%h {commit}^'
+        )
         out = _run_command(cmd)
         out = [c for c in out.split('\n') if c]
         out = self.standardize_commit_id(out)
