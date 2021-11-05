@@ -1,4 +1,3 @@
-from typing import DefaultDict
 import click
 from pathlib import Path
 from data_collection.contract import create_contract_datasets
