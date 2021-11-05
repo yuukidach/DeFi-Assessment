@@ -30,14 +30,16 @@ def _run_command(cmd: str) -> str:
     str
         standard output
     """
-    stdout = check_output(shlex.split(cmd), encoding='utf-8').rstrip('\n')
+    # stdout = check_output(shlex.split(cmd, posix=False), encoding='utf-8')\
+    #          .rstrip('\n')
+    stdout = check_output(cmd, shell=True, encoding='utf-8').rstrip('\n')
     return stdout
 
 
 def _run_single_pipeline_commands(cmds: list) -> str:
     cmd1, cmd2 = cmds[0], cmds[1]
-    ps1 = subprocess.Popen(shlex.split(cmd1), stdout=subprocess.PIPE)
-    stdout = check_output(shlex.split(cmd2),
+    ps1 = subprocess.Popen(shlex.split(cmd1, posix=False), stdout=subprocess.PIPE)
+    stdout = check_output(shlex.split(cmd2, posix=False),
                           stdin=ps1.stdout, 
                           encoding='utf-8').rstrip('\n')
     ps1.wait()
@@ -356,12 +358,13 @@ class GitCommit():
         fnames = self.get_changed_filenames(commit, 'ad')
         for fname in fnames:
             # get total number of lines
-            cmd = f'git --no-pager show {commit}:{fname}'
-            out = _run_single_pipeline_commands([cmd, f'wc -l'])
+            cmd = f'git --no-pager show {commit}:"{fname}" | wc -l'
+            # out = _run_single_pipeline_commands([cmd, f'wc -l'])
+            out = _run_command(cmd)
             cnt = int(out)
             
             # get inserted lines
-            cmd = f'git diff --numstat {commit}^ {commit} -- {fname}'
+            cmd = f'git diff --numstat {commit}^ {commit} -- "{fname}"'
             out = _run_command(cmd)
             added = re.search(r'\d+', out)
             if added is None or cnt == 0:
@@ -398,7 +401,7 @@ class GitCommit():
     def get_author_time(self, commit: str, fname: str=None, skip: int=0) -> int:
         cmd = f'git log --pretty=format:%at -n 1 --skip {skip} {commit}'
         if fname is not None:
-            cmd += f' --follow -- {fname}'
+            cmd += f' --follow -- "{fname}"'
         out = _run_command(cmd)
         if out is None or len(out) == 0:
             return None
@@ -427,7 +430,7 @@ class GitCommit():
         """
         author = self.get_author(commit)
         cmd = (
-            f'git --no-pager log --author="{author}" --abbrev={COMMIT_LEN} '
+            f'git --no-pager log --author "{author}" --abbrev={COMMIT_LEN} '
             f'--pretty=format:%h {commit}^'
         )
         out = _run_command(cmd)

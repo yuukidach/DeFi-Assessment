@@ -65,3 +65,4 @@ Aave (currently in V2), Compound, TrueFi (currently in V4), Cream Finance, Alche
 8. Are Fix-Inducing Changes a Moving Target? A Longitudinal Case Study of Just-In-Time Defect Prediction
 9. [JITLine: A Simpler, Better, Faster, Finer-grained Just-In-Time Defect Prediction](https://arxiv.org/pdf/2103.07068.pdf)
 10. [Just-In-Time Defect Identification and Localization: A Two-Phase Framework](https://pdfs.semanticscholar.org/34bd/efd6a79195aed8f3cecbfa2fe82ae4ccef7a.pdf?_ga=2.251218949.224539333.1635584133-1176253247.1635217848)
+11. [Revisiting Unsupervised Learning for Defect Prediction](https://arxiv.org/pdf/1703.00132.pdf)
