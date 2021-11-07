@@ -6,11 +6,11 @@ build model for smart contract
 import pandas as pd
 import re
 from pathlib import Path
-from typing import List
+from typing import List, Union
 from loguru import logger
 
 
-def find_data_file(fdir: Path) -> list:
+def find_data_file(fdir: Path, suffix: str) -> list:
     """Find all files named as xxxx_matrix.csv
 
     Parameters
@@ -27,11 +27,11 @@ def find_data_file(fdir: Path) -> list:
     for dir in [d for d in fdir.iterdir() if d.is_dir()]:
         fnames.extend(dir.iterdir())
         
-    pat = re.compile(r'^.+_matrix.csv$')
+    pat = re.compile(rf'^.+{suffix}$')
     return [f for f in fnames if pat.match(f.name)]
 
 
-def read_data(fnames: List[Path]) -> pd.DataFrame:
+def read_data(fnames: List[Path], type: str='csv') -> pd.DataFrame:
     """Read all data files and concatenate them
 
     Parameters
@@ -44,10 +44,16 @@ def read_data(fnames: List[Path]) -> pd.DataFrame:
     pd.DataFrame
         Over all dataframe
     """
-    df = pd.read_csv(fnames[0])
+    if type == 'json':
+        df = pd.read_json(fnames[0], orient='table')
+    else:
+        df = pd.read_csv(fnames[0])
     df['plat'] = fnames[0].stem
     for fname in fnames[1:]:
-        sub_df = pd.read_csv(fname)
+        if type == 'json':
+            sub_df = pd.read_json(fname, orient='table')
+        else:
+            sub_df = pd.read_csv(fname)
         sub_df['plat'] = fname.stem
         df = df.append(sub_df, ignore_index=True)
     return df

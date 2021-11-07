@@ -1,18 +1,18 @@
-from pathlib import Path
 import re
 import pandas as pd
+import numpy as np
 from pathlib import Path
 
+INGNORE_FILES = [
+    '.json', '.md', '.yaml', '.yml', '.gitignore', '.log', '.pdf', 'LICENSE',
+    # '.html'
+]
 
-# def (lines: str):
-#     # print(lines)
-#     clean_lines=[]
-#     for line in lines.split('\n'):
-#         print(line)
-#         if re.match(r'^@@.*@@$', line) \
-#            or re.match(r'^diff --git.*$') \
-#            or re.match(r'^inedx'):
-#             continue
+
+def cnt_lines(lines):
+    lines = [l for l in lines.split('\n') if l]
+    return len(lines)
+
 
 def del_changes_of_file(fname: str, lines: str):
     """Remove changes brought by a certain file
@@ -35,8 +35,19 @@ def del_changes_of_file(fname: str, lines: str):
         if start >= 0 and re.match(r'^diff --git .*$', line):
             end = idx
             break
-    lines = lines[0:start] + lines[end:]
+    if start > -1:
+        lines = lines[0:start] + lines[end:]
     return '\n'.join(lines)
+
+
+def del_multiple_files(fname: str, lines: str):
+    pre_len = -1
+    cur_len = cnt_lines(lines)
+    while cur_len != pre_len:
+        pre_len = cur_len
+        lines = del_changes_of_file(fname, lines)
+        cur_len = cnt_lines(lines)
+    return lines
 
 
 def clean_lines(lines: str):
@@ -91,15 +102,14 @@ def split_changes(lines: str):
     return del_lines, add_lines
 
 
-def pre_process_data(fname: Path):
-    df = pd.read_json(fname, orient='table')
-    lines = df['changes'][0]
-    lines = del_changes_of_file('package-lock.json', lines)
+def pre_process_data(lines: str, type: str='add'):
+    for fname in INGNORE_FILES:
+        lines = del_multiple_files(fname, lines)
     lines = clean_lines(lines)
-    print(lines[:1000])
     d, a = split_changes(lines)
-    print(a[:500])
-    print(d[:500])
+    if type == 'del':
+        return d
+    return a
 
 
 if __name__ == '__main__':
