@@ -1,17 +1,69 @@
 import re
+import nltk
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from typing import List
+from loguru import logger
+from sklearn.feature_extraction.text import CountVectorizer
 
 INGNORE_FILES = [
     '.json', '.md', '.yaml', '.yml', '.gitignore', '.log', '.pdf', 'LICENSE',
-    # '.html'
 ]
 
 
 def cnt_lines(lines):
     lines = [l for l in lines.split('\n') if l]
     return len(lines)
+
+
+def find_data_file(fdir: Path, suffix: str) -> list:
+    """Find all files named as xxxx_matrix.csv
+
+    Parameters
+    ----------
+    fdir : Path
+        path of the root data folder
+
+    Returns
+    -------
+    list
+        list of required files
+    """
+    fnames = []
+    for dir in [d for d in fdir.iterdir() if d.is_dir()]:
+        fnames.extend(dir.iterdir())
+        
+    pat = re.compile(rf'^.+{suffix}$')
+    return [f for f in fnames if pat.match(f.name)]
+
+
+def read_data(fnames: List[Path], type: str='csv') -> pd.DataFrame:
+    """Read all data files and concatenate them
+
+    Parameters
+    ----------
+    fnames : List[Path]
+        List of file names
+
+    Returns
+    -------
+    pd.DataFrame
+        Over all dataframe
+    """
+    if type == 'json':
+        df = pd.read_json(fnames[0], orient='table')
+    else:
+        df = pd.read_csv(fnames[0])
+    df['plat'] = fnames[0].stem
+    for fname in fnames[1:]:
+        if type == 'json':
+            sub_df = pd.read_json(fname, orient='table')
+        else:
+            sub_df = pd.read_csv(fname)
+        sub_df['plat'] = fname.stem
+        df = df.append(sub_df, ignore_index=True)
+    return df
 
 
 def del_changes_of_file(fname: str, lines: str):
@@ -102,7 +154,7 @@ def split_changes(lines: str):
     return del_lines, add_lines
 
 
-def pre_process_data(lines: str, type: str='add'):
+def get_valid_log_content(lines: str, type: str='add'):
     for fname in INGNORE_FILES:
         lines = del_multiple_files(fname, lines)
     lines = clean_lines(lines)
@@ -112,5 +164,51 @@ def pre_process_data(lines: str, type: str='add'):
     return a
 
 
-if __name__ == '__main__':
-    pre_process_data('/mnt/d/Projects/DeFi-Lending-Evaluation/data/88mph/88mph_buggy_commits.json') 
+def rm_special_words(txt: str) -> str:
+    """Remove special words
+
+    Parameters
+    ----------
+    txt : str
+        text
+
+    Returns
+    -------
+    str
+        processed text
+    """
+    # remove special charaecters
+    txt = re.sub(r'[\!\#\$\%\&\(\)\*+\,\-\.\/\;\:\<\=\>\?\@\[\]\\\^\_\`\{\}\|\~\n]', ' ', txt)
+    # replace number and string literals with sepcial tokens
+    txt = re.sub(r"([\d ]+)", " <NUM> ", txt)
+    txt = re.sub(r"(\".*?\")", " <STR> ", txt)
+    txt = re.sub(r"(\'.*?\')", " <STR> ", txt)
+    return txt
+    
+
+def pre_process(p: Path):
+    logger.info("Start reading matrix.csv...")
+    fnames = find_data_file(p, '_matrix.csv')
+    matrix_df = read_data(fnames)
+    matrix_df.dropna(inplace=True)
+    matrix_df.drop(['plat'], axis=1, inplace=True)
+
+    logger.info(f'Start reading commits.json...')
+    fnames = find_data_file(p, 'commits.json')
+    commit_df = read_data(fnames, 'json')
+    commit_df.dropna(inplace=True)
+    commit_df['text'] = commit_df['changes'].apply(lambda x:rm_special_words(x))
+    commit_df.drop(['msg', 'plat', 'changes'], axis=1, inplace=True) 
+    
+    logger.info(f'Data pre-processing...')
+    cv = CountVectorizer()
+    cv_fit = cv.fit_transform(commit_df['text'].tolist())
+    commit_df['nw'] = cv_fit.toarray().sum(axis=1)
+
+    idx = cv.get_feature_names().index('function')
+    commit_df['nfunc'] = cv_fit.toarray()[:,idx]
+    
+    df = pd.merge(matrix_df, commit_df, on=['commit', 'buggy'])
+    df.drop(['text'], axis=1, inplace=True)
+
+    return df
