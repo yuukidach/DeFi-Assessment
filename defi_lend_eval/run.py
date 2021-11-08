@@ -8,12 +8,64 @@ import pandas as pd
 import numpy as np
 import json
 
-app = Flask(__name__)
+
+COLUMNS = [
+    {
+        "field": "name",
+        "title": "name",
+        "sortable": True,
+    },
+    {
+        "field": "contract score",
+        "title": "contract score",
+        "sortable": True,
+    },
+    {
+        "field": "finance score",
+        "title": "finance score",
+        "sortable": True,
+    },
+    {
+        "field": "total score",
+        "title": "total score",
+        "sortable": True,
+    }
+]
+
+
+data = [{
+    "name": "aave",
+    "contract score": "1",
+    "finance score": "1",
+    "total score": "1"
+},
+    {
+        "name": "compound",
+        "contract score": "2",
+        "finance score": "2",
+        "total score": "2"
+    }, {
+        "name": "cream finance",
+        "contract score": "3",
+        "finance score": "3",
+        "total score": "3"
+    }]
+
+app = Flask(__name__, template_folder='app/templates')
 app.config['SECRET_KEY'] = 'some_random_secret'
 
 
-@app.route('/graph')
+@app.route('/')
+@app.route('/index')
 def index():
+    return render_template('table.html',
+                           data=data,
+                           columns=COLUMNS,
+                           title='DeFi Lending Platform Evaluation')
+
+
+@app.route('/graph')
+def graph_page():
     feature = 'Bar'
     bar = create_plot(feature)
     return render_template('graph.html', plot=bar)
@@ -81,54 +133,6 @@ def hello():
     return render_template('form.html', form=form)
 
 
-data = [{
-    "name": "aave",
-    "contract score": "1",
-    "finance score": "1",
-    "total score": "1"
-},
-    {
-        "name": "compound",
-        "contract score": "2",
-        "finance score": "2",
-        "total score": "2"
-    }, {
-        "name": "cream finance",
-        "contract score": "3",
-        "finance score": "3",
-        "total score": "3"
-    }]
-columns = [
-    {
-        "field": "name",
-        "title": "name",
-        "sortable": True,
-    },
-    {
-        "field": "contract score",
-        "title": "contract score",
-        "sortable": True,
-    },
-    {
-        "field": "finance score",
-        "title": "finance score",
-        "sortable": True,
-    },
-    {
-        "field": "total score",
-        "title": "total score",
-        "sortable": True,
-    }
-]
-
-
-@app.route('/')
-def overview():
-    return render_template("table.html",
-                           data=data,
-                           columns=columns,
-                           title='Flask Bootstrap Table')
-
-
 if __name__ == '__main__':
     app.run(port=8080)
+    
