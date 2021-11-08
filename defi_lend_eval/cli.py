@@ -2,6 +2,7 @@ import click
 from pathlib import Path
 from data_collection.contract import create_contract_datasets
 from preprocess.contract import pre_process
+from modelling.contract import train
 
 @click.group()
 def cli():
@@ -38,8 +39,20 @@ def data_process(force, source, target):
     df.to_csv(target, index=False)
     
 
+@click.command()
+@click.option('-s', '--source', type=click.Path(exists=True),
+               default=Path(__file__).resolve().parents[1] / 'data/final.csv',
+               help='Path of processed data.')
+@click.option('-t', '--target', type=click.Path(), 
+               default=Path(__file__).resolve().parents[1] / 'models/',
+               help='Location to save the model.')
+def train_model(source, target):
+    train(source, target)
+    
+
 cli.add_command(data_collection, 'data')
 cli.add_command(data_process, 'process')
+cli.add_command(train_model, 'train')
 
 
 if __name__ == '__main__':

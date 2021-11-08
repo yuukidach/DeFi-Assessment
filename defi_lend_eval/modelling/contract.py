@@ -3,71 +3,84 @@
 build model for smart contract
 '''
 
+import joblib
 import pandas as pd
-import re
+import numpy as np
 from pathlib import Path
 from typing import List, Union
 from loguru import logger
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix, f1_score
+from imblearn.over_sampling import SMOTE
 
 
-def find_data_file(fdir: Path, suffix: str) -> list:
-    """Find all files named as xxxx_matrix.csv
+def get_dataset(src: Path):
+    df = pd.read_csv(src)
+    train, test = train_test_split(df, test_size=0.3)
+    logger.info(f'Status of train set: {train["buggy"].value_counts()}')
+    logger.info(f'Status of test set: {test["buggy"].value_counts()}')
+    
+    train_x = train.drop(['commit', 'buggy'], axis=1)
+    train_y = train['buggy']
 
-    Parameters
-    ----------
-    fdir : Path
-        path of the root data folder
+    sampled_x, sampled_y = SMOTE().fit_resample(train_x, train_y)
+    logger.info(f'After over sampling, size of test set: {sampled_x["buggy"].value_counts()}')
 
-    Returns
-    -------
-    list
-        list of required files
-    """
-    fnames = []
-    for dir in [d for d in fdir.iterdir() if d.is_dir()]:
-        fnames.extend(dir.iterdir())
-        
-    pat = re.compile(rf'^.+{suffix}$')
-    return [f for f in fnames if pat.match(f.name)]
+    test_x = test.drop(['commit', 'buggy'], axis=1)
+    test_y = test['buggy']
+
+    return sampled_x, sampled_y, test_x, test_y
 
 
-def read_data(fnames: List[Path], type: str='csv') -> pd.DataFrame:
-    """Read all data files and concatenate them
+def evaluate_model(model, test_x, test_y):
+    pred = model.predict(test_x)
+    report = classification_report(test_y, pred)
+    unique_label = np.unique([test_y, pred])
+    cmtx = pd.DataFrame(confusion_matrix(test_y, pred, labels=unique_label),
+                        index=['true:{:}'.format(x) for x in unique_label],
+                        columns=['pred:{:}'.format(x) for x in unique_label])
+    logger.info(f'Predicting with default threshold...')
+    print(report)
+    print(cmtx)
 
-    Parameters
-    ----------
-    fnames : List[Path]
-        List of file names
+    pred_prob = model.predict_proba(test_x)
 
-    Returns
-    -------
-    pd.DataFrame
-        Over all dataframe
-    """
-    if type == 'json':
-        df = pd.read_json(fnames[0], orient='table')
-    else:
-        df = pd.read_csv(fnames[0])
-    df['plat'] = fnames[0].stem
-    for fname in fnames[1:]:
-        if type == 'json':
-            sub_df = pd.read_json(fname, orient='table')
-        else:
-            sub_df = pd.read_csv(fname)
-        sub_df['plat'] = fname.stem
-        df = df.append(sub_df, ignore_index=True)
-    return df
+    max_score = 0
+    th = 0
+    for i in range(1, 100):
+        pred = (pred_prob[:,1] >= i/100)
+        score = f1_score(test_y, pred)
+        if score > max_score:
+            max_score = score
+            th = i/100
 
+    logger.info(f'Threshhold: {th}; Max-Score: {max_score}')
+    pred = (pred_prob[:,1] >= th)
+    report = classification_report(test_y, pred)
+    logger.info(f'Predicting with best threshold about f1-score')
+    print(report)
+    print(confusion_matrix(test_y, pred))
 
-def preprocess(df: pd.DataFrame):
-    logger.info(f'Raw data size: {df.shape}')
-    df = df.dropna()
-    logger.info(f'After dropping NaN cells: {df.shape}')
-    logger.info(df.describe())
+    return th
 
 
-if __name__ == '__main__':
-    p = Path('/mnt/d/projects/Defi-Lending-Evaluation/data/')
-    fnames = find_data_file(p)
-    df = read_data(fnames)
-    df = preprocess(df)
+def train(src: Path, dir: Path):
+    train_x, train_y, test_x, test_y = get_dataset(src)
+    rf = RandomForestClassifier(
+        n_estimators=300, 
+        criterion='entropy', 
+        max_features=6
+    )
+    logger.info(f'Fitting model...')
+    rf.fit(train_x, train_y)
+    evaluate_model(rf, test_x, test_y)
+    p = dir / 'random_forest.joblib'
+    joblib.dump(rf, p)
+    logger.info(f'Model savd in {p}')
+
+
+def predict_prob(x, mpath: Path, th: float=0.5):
+    model = joblib.load(mpath)
+    pred = model.predict_proba(x)
+    return pred[:,1]
