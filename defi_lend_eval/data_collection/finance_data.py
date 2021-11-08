@@ -209,10 +209,31 @@ def get_comments_from_dydx():
     f_dydx.close()
 
 
+def get_history_price(currency):
+    file_name = {'aave': 'aave', 'comp': 'compound', 'cream': 'cream',
+                 'alcx': 'alchemix', 'dydx': 'dydx', 'tru': 'truefi'}
+    limit = {'aave': '365', 'comp': '365', 'cream': '365',
+             'alcx': '30', 'dydx': '30', 'tru': '30'}
+    url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=" + currency + "&tsym=USD&limit="+limit[currency]
+    response = get_response(url)
+    file = open('price_history/'+file_name[currency]+'.csv', 'w', encoding='utf-8')
+    csv_file = csv.writer(file)
+    csv_file.writerow(['time', 'price', 'volume'])
+    for cc in response['Data']['Data']:
+        csv_file.writerow([cc['time'], cc['close'], cc['volumeto']])
+    file.close()
+
+
 if __name__ == '__main__':
-    get_comments_from_aave()
-    get_comments_from_compound()
-    get_comments_from_cream()
-    get_comments_from_truefi()
-    get_comments_from_alchemix()
-    get_comments_from_dydx()
+    # get_comments_from_aave()
+    # get_comments_from_compound()
+    # get_comments_from_cream()
+    # get_comments_from_truefi()
+    # get_comments_from_alchemix()
+    # get_comments_from_dydx()
+    # get_history_price('aave')
+    # get_history_price('comp')
+    # get_history_price('cream')
+    # get_history_price('dydx')
+    # get_history_price('tru')
+    print('done')
