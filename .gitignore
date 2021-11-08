@@ -204,7 +204,9 @@ ipython_config.py
 #   git rm -r .ipynb_checkpoints/
 
 data_bak/
-
 data/
+data.zip
+papers/
+*100d.txt
 
 # End of https://www.toptal.com/developers/gitignore/api/linux,vim,visualstudiocode
