@@ -1,55 +1,12 @@
-from flask import Flask, render_template, flash, request
-from wtforms import Form, validators, StringField
-
+import json
 import plotly
-import plotly.graph_objs as go
-
 import pandas as pd
 import numpy as np
-import json
-
-
-COLUMNS = [
-    {
-        "field": "name",
-        "title": "name",
-        "sortable": True,
-    },
-    {
-        "field": "contract score",
-        "title": "contract score",
-        "sortable": True,
-    },
-    {
-        "field": "finance score",
-        "title": "finance score",
-        "sortable": True,
-    },
-    {
-        "field": "total score",
-        "title": "total score",
-        "sortable": True,
-    }
-]
-
-
-data = [{
-    "name": "aave",
-    "contract score": "1",
-    "finance score": "1",
-    "total score": "1"
-},
-    {
-        "name": "compound",
-        "contract score": "2",
-        "finance score": "2",
-        "total score": "2"
-    }, {
-        "name": "cream finance",
-        "contract score": "3",
-        "finance score": "3",
-        "total score": "3"
-    }]
+import plotly.graph_objs as go
+from pathlib import Path
+from flask import Flask, render_template, flash, request
+from wtforms import Form, validators, StringField
+from app.data import COLUMNS, get_table_data
 
 app = Flask(__name__, template_folder='app/templates')
 app.config['SECRET_KEY'] = 'some_random_secret'
@@ -58,10 +15,14 @@ app.config['SECRET_KEY'] = 'some_random_secret'
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('table.html',
-                           data=data,
-                           columns=COLUMNS,
-                           title='DeFi Lending Platform Evaluation')
+    return render_template(
+        'table.html',
+        data=get_table_data(Path('docs/platforms.csv'),
+                            Path('data/final.csv'), 
+                            Path('models/random_forest.joblib')),
+        columns=COLUMNS,
+        title='DeFi Lending Platform Evaluation'
+    )
 
 
 @app.route('/graph')
