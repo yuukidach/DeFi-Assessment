@@ -13,8 +13,8 @@ import numpy as np
 import pandas as pd
 import requests
 
-dir_token = '../data_collection/token_history/'
-dir_esg = '../data_collection/social/'
+dir_token = 'data/token_history/'
+dir_esg = 'data/social/'
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                   'Chrome/87.0.4280.66 Safari/537.36 '
