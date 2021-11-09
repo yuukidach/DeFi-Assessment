@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import List, Dict
-from modelling import contract
+from modelling import contract, finance
 
 COLUMNS = [
     { 'field': 'name', 'title': 'name', 'sortable': True },
@@ -40,6 +40,14 @@ def get_contract_score(commit: str, df: pd.DataFrame, mpath: Path) -> float:
     return str(round((1-prob[0])*100, 2))+'%'
 
 
+def get_finance_score(name):
+    scores = finance.get_finance_scores()
+    if name in scores.keys():
+        return str(round(scores[name]*100, 2))+'%'
+    else:
+        return 0
+
+
 def get_table_data(src: Path, ref: Path, ctx_mpath: Path) -> List[Dict]:
     """Get data to display in table
 
@@ -67,6 +75,7 @@ def get_table_data(src: Path, ref: Path, ctx_mpath: Path) -> List[Dict]:
         name = row['platform']
         commit = row['commit']
         ctx_score = get_contract_score(commit, ref_df, ctx_mpath)
+        fin_score = get_finance_score(name)
         data.append({'name': name, 'ctx': ctx_score, 
-                     'fin': 2, 'cen': 3,'total': 4})
+                     'fin': fin_score, 'cen': 3,'total': 4})
     return data
