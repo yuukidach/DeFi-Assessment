@@ -13,8 +13,8 @@ import numpy as np
 import pandas as pd
 import requests
 
-dir_token = '../data_collection/token_history/'
-dir_esg = '../data_collection/social/'
+dir_token = 'data/token_history/'
+dir_esg = 'data/social/'
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                   'Chrome/87.0.4280.66 Safari/537.36 '
@@ -201,16 +201,41 @@ def liquidity_factor(currency):
 
 
 def calculate_factors(currency):
-    token_model = load_model("token_model.h5")
+    token_model = load_model("models/token_model.h5")
     token_factor_value = token_factor(token_model, currency)
     esg_factor_value = esg_factor(currency)
     var_factor_value = var_factor(currency)
     liquidity_factor_value = liquidity_factor(currency)
-    print(token_factor_value)
-    print(esg_factor_value)
-    print(var_factor_value)
-    print(liquidity_factor_value)
+    return token_factor_value, esg_factor_value, var_factor_value, liquidity_factor_value
+
+
+def get_finance_scores():
+    finance_scores = []
+    aave_finance_score = calculate_factors('aave')
+    compound_finance_score = calculate_factors('compound')
+    cream_finance_score = calculate_factors('cream')
+    alchemix_finance_score = calculate_factors('alchemix')
+    dydx_finance_score = calculate_factors('dydx')
+    truefi_finance_score = calculate_factors('truefi')
+    finance_scores.append(aave_finance_score)
+    finance_scores.append(compound_finance_score)
+    finance_scores.append(cream_finance_score)
+    finance_scores.append(alchemix_finance_score)
+    finance_scores.append(dydx_finance_score)
+    finance_scores.append(truefi_finance_score)
+    df = pd.DataFrame(finance_scores)
+    df_finance_scores = pd.DataFrame(scaler.fit_transform(df))
+    weights = [0.2, 0.3, 0.3, 0.2]
+    df_finance_scores['sum'] = df_finance_scores.dot(weights)
+    scores = {'Aave': df_finance_scores['sum'][0],
+              'Compound': df_finance_scores['sum'][1],
+              'CreamFinance': df_finance_scores['sum'][2],
+              'Alchemix': df_finance_scores['sum'][3],
+              'dydx': df_finance_scores['sum'][4],
+              'TrueFi': df_finance_scores['sum'][5]}
+    return scores
 
 
 if __name__ == '__main__':
-    calculate_factors('aave')
+    # get_finance_scores()
+    print('done')
