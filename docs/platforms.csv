@@ -1,16 +1,16 @@
-platform,address,bounty,audit_public,audit_1yr_2021_10_03,launch_time,block,github_addr,alive,commit
-Aave,0x398eC7346DcD622eDc5ae82352F02bE94C62d119,1,1,1,1578500586,9241022,git@github.com:aave/protocol-v2.git,1,59ed7391
-Compound,0x3FDA67f7583380E67ef93072294a7fAc882FD7E7,1,1,0,1537926507,6400278,git@github.com:compound-finance/compound-protocol.git,1,8547f5cb
-TrueFi,0xa1e72267084192Db7387c8CC1328fadE470e4149,1,1,1,1605682163,11280398,git@github.com:trusttoken/smart-contracts.git,1,7fa68f77
-CreamFinance,0x2ba592F78dB6436527729929AAf6c908497cB200,1,1,1,1596553617,10594024,git@github.com:CreamFi/compound-protocol.git,1,8547f5cb
-Alchemix,0xAB8e74017a8Cc7c15FFcCd726603790d26d7DeCa,1,1,1,1614401264,11937279,git@github.com:alchemix-finance/alchemix-protocol.git,1,14344a03
-dydx,0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e,1,1,1,1555374270,7575711,git@github.com:dydxprotocol/solo.git,1,0412e945
-88mph,0x8888801aF4d980682e47f1A9036e589479e835C5,1,1,1,1605809018,11289991,git@github.com:88mphapp/88mph-contracts.git,1,0285e970
-bZx,0x1c74cFF0376FB4031Cd7492cD6dB2D66c3f2c6B9,1,1,0,1537906043,6398802,git@github.com:bZxNetwork/contractsV2.git,1,ffa96a26
-ForTube,0x437979364674d8165Eb625b0611Adf8DBE55dE6c,1,1,0,1594860833,10467433,git@github.com:thefortube/fortube.git,1,2c6f1fc2
-Inverse finance,0x44f262622248027f8E2a8Fb1090c4Cf85072392C,0,0,0,1614833830,11969737,git@github.com:InverseFinance/inverse-protocol.git,1,b8f0e0fd
-WePiggy,0x451032C55F813338b6e73c1c4B24217614165454,1,1,1,1604824154,11215693,git@github.com:WePiggy/wepiggy-contracts.git,1,b23df3ad
-YieldProtocol,0xa8B61CfF52564758A204F841E636265bEBC8db9B,1,0,0,1614857665,11971544,git@github.com:yieldprotocol/vault-v2.git,1,2d49f6de
-BarnBridge,0x5Dc02Ea99285E17656b8350722694c35154DB1E8,1,1,1,1605331410,11253919,git@github.com:BarnBridge/BarnBridge-SmartYieldBonds.git,1,4df349bb
-Synthetix,0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F,1,1,0,1565329008,8314597,git@github.com:Synthetixio/synthetix.git,1,defb0352
-UMA,,1,1,0,,,git@github.com:UMAprotocol/protocol.git,,8143f260
+platform,address,bounty,audit_public,audit_1yr_2021_10_03,launch_time,block,github_addr,alive,commit,oracle,admin
+Aave,0x398eC7346DcD622eDc5ae82352F02bE94C62d119,1,1,1,1578500586,9241022,git@github.com:aave/protocol-v2.git,1,59ed7391,3,3
+Compound,0x3FDA67f7583380E67ef93072294a7fAc882FD7E7,1,1,0,1537926507,6400278,git@github.com:compound-finance/compound-protocol.git,1,8547f5cb,1,2
+TrueFi,0xa1e72267084192Db7387c8CC1328fadE470e4149,1,1,1,1605682163,11280398,git@github.com:trusttoken/smart-contracts.git,1,7fa68f77,3,2
+CreamFinance,0x2ba592F78dB6436527729929AAf6c908497cB200,1,1,1,1596553617,10594024,git@github.com:CreamFi/compound-protocol.git,1,8547f5cb,3,4
+Alchemix,0xAB8e74017a8Cc7c15FFcCd726603790d26d7DeCa,1,1,1,1614401264,11937279,git@github.com:alchemix-finance/alchemix-protocol.git,1,14344a03,3,3
+dydx,0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e,1,1,1,1555374270,7575711,git@github.com:dydxprotocol/solo.git,1,0412e945,2,4
+88mph,0x8888801aF4d980682e47f1A9036e589479e835C5,1,1,1,1605809018,11289991,git@github.com:88mphapp/88mph-contracts.git,1,0285e970,3,1
+bZx,0x1c74cFF0376FB4031Cd7492cD6dB2D66c3f2c6B9,1,1,0,1537906043,6398802,git@github.com:bZxNetwork/contractsV2.git,1,ffa96a26,3,1
+ForTube,0x437979364674d8165Eb625b0611Adf8DBE55dE6c,1,1,0,1594860833,10467433,git@github.com:thefortube/fortube.git,1,2c6f1fc2,2,1
+Inverse finance,0x44f262622248027f8E2a8Fb1090c4Cf85072392C,0,0,0,1614833830,11969737,git@github.com:InverseFinance/inverse-protocol.git,1,b8f0e0fd,3,1
+WePiggy,0x451032C55F813338b6e73c1c4B24217614165454,1,1,1,1604824154,11215693,git@github.com:WePiggy/wepiggy-contracts.git,1,b23df3ad,3,3
+YieldProtocol,0xa8B61CfF52564758A204F841E636265bEBC8db9B,1,0,0,1614857665,11971544,git@github.com:yieldprotocol/vault-v2.git,1,2d49f6de,3,1
+BarnBridge,0x5Dc02Ea99285E17656b8350722694c35154DB1E8,1,1,1,1605331410,11253919,git@github.com:BarnBridge/BarnBridge-SmartYieldBonds.git,1,4df349bb,3,1
+Synthetix,0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F,1,1,0,1565329008,8314597,git@github.com:Synthetixio/synthetix.git,1,defb0352,3,3
+UMA,,1,1,0,,,git@github.com:UMAprotocol/protocol.git,,8143f260,3,1
