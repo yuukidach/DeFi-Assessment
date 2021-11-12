@@ -1,4 +1,5 @@
 import json
+import csv
 import plotly
 import pandas as pd
 import numpy as np
@@ -17,12 +18,22 @@ app.config['SECRET_KEY'] = 'some_random_secret'
 def index():
     return render_template(
         'table.html',
-        data=get_table_data(Path('docs/platforms.csv'),
-                            Path('data/final.csv'), 
-                            Path('models/random_forest.joblib')),
+        # data=get_table_data(Path('docs/platforms.csv'),
+        #                     Path('data/final.csv'),
+        #                     Path('models/random_forest.joblib')),
+        data=get_table_data_from_csv(),
         columns=COLUMNS,
         title='DeFi Lending Platform Evaluation'
     )
+
+
+def get_table_data_from_csv():
+    data = pd.read_csv('defi_lend_eval/scores.csv')
+    scores = []
+    for i in range(len(data)):
+        scores.append({'name': data.iat[i,0], 'ctx': data.iat[i,1],
+                     'fin': data.iat[i,2], 'cen': data.iat[i,3],'total': data.iat[i,4]})
+    return scores
 
 
 @app.route('/graph')
@@ -33,26 +44,19 @@ def graph_page():
 
 
 def create_plot(feature):
+    scores = pd.read_csv('defi_lend_eval/scores.csv')
     if feature == 'Bar':
-        N = 40
-        x = np.linspace(0, 1, N)
-        y = np.random.randn(N)
-        df = pd.DataFrame({'x': x, 'y': y})  # creating a sample dataframe
         data = [
             go.Bar(
-                x=df['x'],  # assign x as the dataframe column 'x'
-                y=df['y']
+                x=scores['name'][:6],  # assign x as the dataframe column 'x'
+                y=scores['total'][:6]
             )
         ]
     else:
-        N = 1000
-        random_x = np.random.randn(N)
-        random_y = np.random.randn(N)
-
         # Create a trace
         data = [go.Scatter(
-            x=random_x,
-            y=random_y,
+            x=scores['name'][:6],
+            y=scores['total'][:6],
             mode='markers'
         )]
 
@@ -82,11 +86,11 @@ def hello():
     if request.method == 'POST':
         name = request.form['name']
         surname = request.form['surname']
-        email = request.form['email']
-        password = request.form['password']
+        benefit = request.form['benefit']
+        loss = request.form['loss']
 
         if form.validate():
-            flash('Hello: {} {}'.format(name, surname))
+            flash('Your are type of high-risk, high-yield. Suggest Compound!')
 
         else:
             flash('Error: All Fields are Required')
@@ -96,3 +100,12 @@ def hello():
 
 if __name__ == '__main__':
     app.run(port=8080)
+    # data = get_table_data(Path('docs/platforms.csv'),
+    #                       Path('data/final.csv'),
+    #                       Path('models/random_forest.joblib'))
+    # f_scores = open('defi_lend_eval/scores.csv', 'w', encoding='utf-8')
+    # csv_scores = csv.writer(f_scores)
+    # for i in range(len(data)):
+    #     csv_scores.writerow([data[i]['name'], data[i]['ctx'], data[i]['fin'], data[i]['cen'], data[i]['total']])
+    # f_scores.close()
+    # get_table_data_from_csv()

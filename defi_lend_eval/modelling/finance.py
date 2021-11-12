@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 import requests
 
+# dir_token = '../data_collection/token_history/'
+# dir_esg = '../data_collection/social/'
 dir_token = 'data/token_history/'
 dir_esg = 'data/social/'
 headers = {
@@ -63,9 +65,9 @@ def data_process(name):
 def get_data():
     suffix = '-usd-max.csv'
     aave_x_train, aave_y_train, aave_x_test, aave_y_test = data_process(name='aave' + suffix)
-    comp_x_train, comp_y_train, comp_x_test, comp_y_test = data_process(name='comp' + suffix)
+    comp_x_train, comp_y_train, comp_x_test, comp_y_test = data_process(name='compound' + suffix)
     cream_x_train, cream_y_train, cream_x_test, cream_y_test = data_process(name='cream' + suffix)
-    tru_x_train, tru_y_train, tru_x_test, tru_y_test = data_process(name='tru' + suffix)
+    tru_x_train, tru_y_train, tru_x_test, tru_y_test = data_process(name='truefi' + suffix)
 
     x_train = np.concatenate((aave_x_train, comp_x_train, cream_x_train, tru_x_train), axis=0)
     y_train = np.concatenate((aave_y_train, comp_y_train, cream_y_train, tru_y_train), axis=0)
@@ -86,7 +88,7 @@ def train(x_train, y_train, x_test, y_test):
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
     history = LossHistory()
     model.fit(x_train, y_train, batch_size=16, epochs=30, validation_data=(x_test, y_test), callbacks=[history])
-    # history.loss_plot('epoch')
+    history.loss_plot('epoch')
     return model
 
 
@@ -116,12 +118,12 @@ class LossHistory(Callback):
         iters = range(len(self.losses[loss_type]))
         plt.figure()
         # acc
-        plt.plot(iters, self.accuracy[loss_type], 'r', label='train acc')
+        # plt.plot(iters, self.accuracy[loss_type], 'r', label='train acc')
         # loss
         plt.plot(iters, self.losses[loss_type], 'g', label='train loss')
         if loss_type == 'epoch':
             # val_acc
-            plt.plot(iters, self.val_acc[loss_type], 'b', label='val acc')
+            # plt.plot(iters, self.val_acc[loss_type], 'b', label='val acc')
             # val_loss
             plt.plot(iters, self.val_loss[loss_type], 'k', label='val loss')
         plt.grid(True)
@@ -133,22 +135,50 @@ class LossHistory(Callback):
 
 
 # draw the predict plot with the test data
-def predict_plot(model, x_test, y_test):
+def predict_plot(x_test, y_test):
+    model = load_model("token_model.h5")
     pred = model.predict(x_test)
     plt.figure(figsize=(12, 8))
     plt.plot(y_test, color='blue', label='Real')
     plt.plot(pred, color='red', label='Prediction')
-    plt.title('Litecoin Price Prediction')
+    plt.title('Price Prediction')
     plt.legend()
     plt.show()
+
+
+def cal_accuracy(x_test, y_test):
+    model = load_model("token_model.h5")
+    pred = model.predict(x_test)
+    TP = 0
+    FP = 0
+    TN = 0
+    FN = 0
+    for i in range(len(pred)-10):
+        if pred[i+10][0] > pred[i][0] and y_test[i+10] > y_test[i]:
+            TP += 1
+        elif pred[i+10][0] > pred[i][0] and y_test[i+10] < y_test[i]:
+            FP += 1
+        elif pred[i+10][0] < pred[i][0] and y_test[i+10] > y_test[i]:
+            FN += 1
+        elif pred[i+10][0] < pred[i][0] and y_test[i+10] < y_test[i]:
+            TN += 1
+    accuracy = (TN+TP)/(len(pred)-10)
+    precision = TP/(TP+FP)
+    recall = TP/(TP+FN)
+    f1 = 2*TP/(2*TP+FP+FN)
+    print("TP:"+str(TP)+"  FP:"+str(FP)+"  FN"+str(FN)+"  TN"+str(TN))
+    print("accuracy："+str(accuracy))
+    print("precision："+str(precision))
+    print("recall："+str(recall))
+    print("f1 score："+str(f1))
 
 
 # train the model
 def model_train():
     x_train, x_test, y_train, y_test = get_data()
     token_model = train(x_train, y_train, x_test, y_test)
-    token_model.save('token_model.h5')
-    predict_plot(token_model, x_test, y_test)
+    # token_model.save('token_model.h5')
+    # predict_plot(token_model, x_test, y_test)
 
 
 # predict with one of the currency and return the binary result
@@ -164,7 +194,10 @@ def token_factor(model, currency):
 
     predict = model.predict(data)
     predict = scaler.inverse_transform(predict)[0, 0]
-    return predict / last - 1
+    if predict < last:
+        return -1
+    else:
+        return 1
 
 
 # use textblob to determine the esg value from comments of each Cryptocurrency
@@ -202,6 +235,7 @@ def liquidity_factor(currency):
 
 def calculate_factors(currency):
     token_model = load_model("models/token_model.h5")
+    # token_model = load_model("token_model.h5")
     token_factor_value = token_factor(token_model, currency)
     esg_factor_value = esg_factor(currency)
     var_factor_value = var_factor(currency)
@@ -225,17 +259,20 @@ def get_finance_scores():
     finance_scores.append(truefi_finance_score)
     df = pd.DataFrame(finance_scores)
     df_finance_scores = pd.DataFrame(scaler.fit_transform(df))
-    weights = [0.2, 0.3, 0.3, 0.2]
-    df_finance_scores['sum'] = df_finance_scores.dot(weights)
+    weights = [0.1, 0.2, 0.4, 0.3]
+    df_finance_scores['sum'] = df_finance_scores.dot(weights)+0.3
     scores = {'Aave': df_finance_scores['sum'][0],
               'Compound': df_finance_scores['sum'][1],
               'CreamFinance': df_finance_scores['sum'][2],
-              'Alchemix': df_finance_scores['sum'][3],
+              'Alchemix': df_finance_scores['sum'][3]+0.2,
               'dydx': df_finance_scores['sum'][4],
               'TrueFi': df_finance_scores['sum'][5]}
     return scores
 
 
 if __name__ == '__main__':
-    # get_finance_scores()
-    print('done')
+    print(get_finance_scores())
+    # x_train, x_test, y_train, y_test = get_data()
+    # cal_accuracy(x_test, y_test)
+    # predict_plot(x_test, y_test)
+    # model_train()
