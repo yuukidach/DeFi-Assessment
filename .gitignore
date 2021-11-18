@@ -208,5 +208,6 @@ data/
 data.zip
 papers/
 *100d.txt
+models/
 
 # End of https://www.toptal.com/developers/gitignore/api/linux,vim,visualstudiocode

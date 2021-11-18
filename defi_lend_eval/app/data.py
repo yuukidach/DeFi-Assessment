@@ -3,12 +3,13 @@ import numpy as np
 from pathlib import Path
 from typing import List, Dict
 from modelling import contract, finance
+from math import sqrt
 
 COLUMNS = [
     { 'field': 'name', 'title': 'name', 'sortable': True },
     { 'field': 'ctx', 'title': 'Contract Score', 'sortable': True },
     { 'field': 'fin', 'title': 'Finance Score', 'sortable': True },
-    { 'field': 'cen', 'title': 'Centralization Score', 'sortable': True },
+    { 'field': 'cen', 'title': 'Intermediary Score', 'sortable': True },
     { 'field': 'total', 'title': 'Total score', 'sortable': True }
 ]
 
@@ -37,7 +38,14 @@ def get_contract_row_data(commit: str, df: pd.DataFrame) -> np.array:
 def get_contract_score(commit: str, df: pd.DataFrame, mpath: Path) -> float:
     x = get_contract_row_data(commit, df)
     prob = contract.predict_prob(x, mpath)
-    return str(round((1-prob[0])*100, 2))+'%'
+    return str(round((1-prob[0])*100, 2)) + '%'
+
+
+def get_intermediary_score(oracle: int, admin: int) -> float:
+    oracle  = oracle * 30 
+    admin = sqrt(admin * 20) * 10 
+    score = round(0.5*oracle+0.5*admin, 2)
+    return str(score) + '%'
 
 
 def get_finance_score(name):
@@ -76,6 +84,7 @@ def get_table_data(src: Path, ref: Path, ctx_mpath: Path) -> List[Dict]:
         commit = row['commit']
         ctx_score = get_contract_score(commit, ref_df, ctx_mpath)
         fin_score = get_finance_score(name)
+        cen_score = get_intermediary_score(row['oracle'], row['admin'])
         data.append({'name': name, 'ctx': ctx_score, 
-                     'fin': fin_score, 'cen': 3,'total': 4})
+                     'fin': fin_score, 'cen': cen_score,'total': 4})
     return data
