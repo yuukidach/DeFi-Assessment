@@ -19,7 +19,7 @@ def get_contract_row_data(commit: str, df: pd.DataFrame) -> np.array:
 
     Parameters
     ----------
-    commit : str
+    commit  str
         commit id
     df : pd.DataFrame
         full dataframe
@@ -36,32 +36,31 @@ def get_contract_row_data(commit: str, df: pd.DataFrame) -> np.array:
 
 
 def format_score(score):
+    score = round(score, 2)
     return str(score) + '%'
 
 
 def get_contract_score(commit: str, df: pd.DataFrame, mpath: Path) -> float:
     x = get_contract_row_data(commit, df)
     prob = contract.predict_prob(x, mpath)
-    score = round((1 - prob[0]) * 100, 2)
-    return score
+    score = (1 - prob[0]) * 100
+    return format_score(score)
 
 
 def get_intermediary_score(oracle: int, admin: int) -> float:
-    oracle = oracle * 30
-    admin = sqrt(admin * 20) * 10
-    score = round(0.5 * oracle + 0.5 * admin, 2)
-    return score
-
-
-def get_finance_score(name):
-    scores = finance.get_finance_scores()
-    if name in scores.keys():
-        return round(scores[name] * 100, 2)
+    if oracle == 4:
+        oracle = 100.0
     else:
-        return 0
+        oracle = (oracle * 30) * (oracle * 30) / 90
+    admin = sqrt(admin * 20) * 10
+    score = 0.5 * oracle + 0.5 * admin
+    return format_score(score)
 
 
 def get_total_score(ctx_score, cen_score, fin_score):
+    ctx_score = float(ctx_score[:-1])
+    cen_score = float(cen_score[:-1])
+    fin_score = float(fin_score[:-1])
     if ctx_score >= 53:
         threshold = 0.2
     else:
@@ -71,6 +70,7 @@ def get_total_score(ctx_score, cen_score, fin_score):
         total = '-'
     else:
         total = threshold * ctx_score + 0.6 * fin_score + 0.2 * cen_score
+        total = format_score(total)
     return total
 
 
@@ -97,21 +97,14 @@ def get_table_data(src: Path, ref: Path, ctx_mpath: Path) -> List[Dict]:
     df = pd.read_csv(src)
     ref_df = pd.read_csv(ref)
     data = []
+    fin_scores = finance.get_finance_scores()
     for _, row in df.iterrows():
         name = row['platform']
         commit = row['commit']
         ctx_score = get_contract_score(commit, ref_df, ctx_mpath)
-<<<<<<< HEAD
-        fin_score = get_finance_score(name)
         cen_score = get_intermediary_score(row['oracle'], row['admin'])
-        data.append({'name': name, 'ctx': ctx_score, 
-                     'fin': fin_score, 'cen': cen_score,'total': 4})
-=======
-        cen_score = get_intermediary_score(row['oracle'], row['admin'])
-        fin_score = get_finance_score(name)
+        fin_score = format_score(fin_scores.get(name, 0)*100)
         total_score = get_total_score(ctx_score, cen_score, fin_score)
-        data.append({'name': name, 'ctx': format_score(ctx_score),
-                     'fin': format_score(fin_score), 'cen': format_score(cen_score),
-                     'total': format_score(total_score)})
->>>>>>> origin/UI
+        data.append({'name': name, 'ctx': ctx_score, 'fin': fin_score, 
+                     'cen': cen_score, 'total': total_score})
     return data

@@ -12,28 +12,20 @@ from app.data import COLUMNS, get_table_data
 app = Flask(__name__, template_folder='app/templates')
 app.config['SECRET_KEY'] = 'some_random_secret'
 
+INDEX_DATA=get_table_data(Path('docs/platforms.csv'),
+                          Path('data/contract/final.csv'),
+                          Path('models/random_forest.joblib'))
+
 
 @app.route('/')
 @app.route('/index')
 def index():
     return render_template(
         'table.html',
-        # data=get_table_data(Path('docs/platforms.csv'),
-        #                     Path('data/final.csv'),
-        #                     Path('models/random_forest.joblib')),
-        data=get_table_data_from_csv(),
+        data=INDEX_DATA,
         columns=COLUMNS,
         title='DeFi Lending Platform Evaluation'
     )
-
-
-def get_table_data_from_csv():
-    data = pd.read_csv('defi_lend_eval/scores.csv')
-    scores = []
-    for i in range(len(data)):
-        scores.append({'name': data.iat[i,0], 'ctx': data.iat[i,1],
-                     'fin': data.iat[i,2], 'cen': data.iat[i,3],'total': data.iat[i,4]})
-    return scores
 
 
 @app.route('/graph')
@@ -99,7 +91,7 @@ def hello():
 
 
 if __name__ == '__main__':
-    app.run(port=8080)
+    app.run(port=8080, debug=False)
     # data = get_table_data(Path('docs/platforms.csv'),
     #                       Path('data/final.csv'),
     #                       Path('models/random_forest.joblib'))

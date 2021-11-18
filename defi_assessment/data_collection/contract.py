@@ -151,8 +151,8 @@ def create_git_matrix_csv(gc: GitCommit, src_csv: Path, tgt_csv: Path):
 
 
 def create_contract_datasets(platform_csv: Path, 
-                              saved_dir: Path, 
-                              force: bool):
+                             saved_dir: Path, 
+                             force: bool):
     """ Create csv datasets for smart contracts.
 
     Args:

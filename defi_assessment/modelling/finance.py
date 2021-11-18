@@ -8,14 +8,13 @@ from keras.layers import Dense, LSTM
 from keras.callbacks import Callback
 from keras.models import load_model
 from textblob import TextBlob
+from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import requests
 
-# dir_token = '../data_collection/token_history/'
-# dir_esg = '../data_collection/social/'
-dir_token = 'data/token_history/'
+dir_token = 'data/token_value/'
 dir_esg = 'data/social/'
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -39,7 +38,7 @@ def get_response(url):
 
 # process the data with the shape of LSTM
 def data_process(name):
-    data = pd.read_csv(dir_token + name)
+    data = pd.read_csv(name)
     data_scaler = scaler.fit_transform(data[['price']])
 
     length = 10
@@ -62,12 +61,12 @@ def data_process(name):
 
 
 # get all the Cryptocurrency data
-def get_data():
+def get_data(source: Path):
     suffix = '-usd-max.csv'
-    aave_x_train, aave_y_train, aave_x_test, aave_y_test = data_process(name='aave' + suffix)
-    comp_x_train, comp_y_train, comp_x_test, comp_y_test = data_process(name='compound' + suffix)
-    cream_x_train, cream_y_train, cream_x_test, cream_y_test = data_process(name='cream' + suffix)
-    tru_x_train, tru_y_train, tru_x_test, tru_y_test = data_process(name='truefi' + suffix)
+    aave_x_train, aave_y_train, aave_x_test, aave_y_test = data_process(source / f'aave{suffix}')
+    comp_x_train, comp_y_train, comp_x_test, comp_y_test = data_process(source / f'compound{suffix}')
+    cream_x_train, cream_y_train, cream_x_test, cream_y_test = data_process(source / f'cream{suffix}')
+    tru_x_train, tru_y_train, tru_x_test, tru_y_test = data_process(source / f'truefi{suffix}')
 
     x_train = np.concatenate((aave_x_train, comp_x_train, cream_x_train, tru_x_train), axis=0)
     y_train = np.concatenate((aave_y_train, comp_y_train, cream_y_train, tru_y_train), axis=0)
@@ -78,7 +77,7 @@ def get_data():
 
 
 # train the model
-def train(x_train, y_train, x_test, y_test):
+def train_lstm(x_train, y_train, x_test, y_test):
     model = Sequential()
     model.add(LSTM(units=32, return_sequences=True, input_shape=(x_train.shape[1], 1), dropout=0.2))
     model.add(LSTM(units=32, return_sequences=True, dropout=0.2))
@@ -174,21 +173,21 @@ def cal_accuracy(x_test, y_test):
 
 
 # train the model
-def model_train():
-    x_train, x_test, y_train, y_test = get_data()
-    token_model = train(x_train, y_train, x_test, y_test)
-    # token_model.save('token_model.h5')
-    # predict_plot(token_model, x_test, y_test)
+def train(source: Path, target: Path):
+    x_train, x_test, y_train, y_test = get_data(source / 'token_value')
+    token_model = train_lstm(x_train, y_train, x_test, y_test)
+    token_model.save(target / 'token_model.h5')
 
 
 # predict with one of the currency and return the binary result
 def token_factor(model, currency):
     suffix = '-usd-max.csv'
     data = read_tokens(currency + suffix)
+    scaler.fit(data)
     data = data.tail(10)
     last = data.tail(1).values[0, 0]
 
-    data = scaler.fit_transform(data)
+    data = scaler.transform(data)
     data = np.array(data, ndmin=10)
     data = np.reshape(data, (1, 10, 1))
 
@@ -233,9 +232,7 @@ def liquidity_factor(currency):
     return liquidity_factor_value[currency]
 
 
-def calculate_factors(currency):
-    token_model = load_model("models/token_model.h5")
-    # token_model = load_model("token_model.h5")
+def calculate_factors(currency, token_model):
     token_factor_value = token_factor(token_model, currency)
     esg_factor_value = esg_factor(currency)
     var_factor_value = var_factor(currency)
@@ -245,12 +242,13 @@ def calculate_factors(currency):
 
 def get_finance_scores():
     finance_scores = []
-    aave_finance_score = calculate_factors('aave')
-    compound_finance_score = calculate_factors('compound')
-    cream_finance_score = calculate_factors('cream')
-    alchemix_finance_score = calculate_factors('alchemix')
-    dydx_finance_score = calculate_factors('dydx')
-    truefi_finance_score = calculate_factors('truefi')
+    token_model = load_model("models/token_model.h5")
+    aave_finance_score = calculate_factors('aave', token_model)
+    compound_finance_score = calculate_factors('compound', token_model)
+    cream_finance_score = calculate_factors('cream', token_model)
+    alchemix_finance_score = calculate_factors('alchemix', token_model)
+    dydx_finance_score = calculate_factors('dydx', token_model)
+    truefi_finance_score = calculate_factors('truefi', token_model)
     finance_scores.append(aave_finance_score)
     finance_scores.append(compound_finance_score)
     finance_scores.append(cream_finance_score)
@@ -264,7 +262,7 @@ def get_finance_scores():
     scores = {'Aave': df_finance_scores['sum'][0],
               'Compound': df_finance_scores['sum'][1],
               'CreamFinance': df_finance_scores['sum'][2],
-              'Alchemix': df_finance_scores['sum'][3]+0.2,
+              'Alchemix': df_finance_scores['sum'][3],
               'dydx': df_finance_scores['sum'][4],
               'TrueFi': df_finance_scores['sum'][5]}
     return scores

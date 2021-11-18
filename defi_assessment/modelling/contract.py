@@ -18,14 +18,14 @@ from imblearn.over_sampling import SMOTE
 def get_dataset(src: Path):
     df = pd.read_csv(src)
     train, test = train_test_split(df, test_size=0.3)
-    logger.info(f'Status of train set: {train["buggy"].value_counts()}')
-    logger.info(f'Status of test set: {test["buggy"].value_counts()}')
+    print(f'Status of train set:\n{train["buggy"].value_counts()}')
+    print(f'Status of test set:\n{test["buggy"].value_counts()}')
     
     train_x = train.drop(['commit', 'buggy'], axis=1)
     train_y = train['buggy']
 
     sampled_x, sampled_y = SMOTE().fit_resample(train_x, train_y)
-    logger.info(f'After over sampling, size of test set: {sampled_x["buggy"].value_counts()}')
+    logger.info(f'After over sampling, size of test set: {sampled_x.shape}')
 
     test_x = test.drop(['commit', 'buggy'], axis=1)
     test_y = test['buggy']
@@ -66,6 +66,7 @@ def evaluate_model(model, test_x, test_y):
 
 
 def train(src: Path, dir: Path):
+    dir.mkdir(parents=True, exist_ok=True)
     train_x, train_y, test_x, test_y = get_dataset(src)
     rf = RandomForestClassifier(
         n_estimators=300, 
