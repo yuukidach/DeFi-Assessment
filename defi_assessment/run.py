@@ -22,10 +22,10 @@ INDEX_DATA=get_table_data(Path('docs/platforms.csv'),
 @app.route('/index')
 def index():
     return render_template(
-        'table.html',
+        'index.html',
         data=INDEX_DATA,
         columns=COLUMNS,
-        title='DeFi Lending Platform Evaluation'
+        title='DeFi Lending Platform Assessment'
     )
 
 
@@ -93,12 +93,4 @@ def suggest():
 
 if __name__ == '__main__':
     app.run(port=8080, debug=False)
-    # data = get_table_data(Path('docs/platforms.csv'),
-    #                       Path('data/final.csv'),
-    #                       Path('models/random_forest.joblib'))
-    # f_scores = open('defi_lend_eval/scores.csv', 'w', encoding='utf-8')
-    # csv_scores = csv.writer(f_scores)
-    # for i in range(len(data)):
-    #     csv_scores.writerow([data[i]['name'], data[i]['ctx'], data[i]['fin'], data[i]['cen'], data[i]['total']])
-    # f_scores.close()
-    # get_table_data_from_csv()
+    

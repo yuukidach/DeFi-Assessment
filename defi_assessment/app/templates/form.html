@@ -1,70 +1,106 @@
 <html>
   <head>
-     <title>Demo Form</title>
-     <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suggestion</title>
+     <!-- <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"> -->
+     <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"> -->
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.min.css">
+    <script type='text/javascript' src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   </head>
+  
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="/">DA</a>
+      </div>
+      <ul class="nav navbar-nav">
+        <li><a href="/">Home</a></li>
+        <li class="active"><a href="/suggest">Suggestion</a></li>
+        <li><a href="/graph">Graph</a></li>
+      </ul>
+    </div>
+  </nav>
+
   <body>
 
     <div class="container"><br>
       <center>
-        <h2>Flask Web Form Demo</h2>
+        <h2>DeFi Lending Platform Suggestion</h2>
       </center>
     </div>
 
-    <div class=container"><br>
-    <div class="row align-items-center justify-content-center">
-    <div class="col-md-4">
-      <form  action="" method="post" role="form">
-        {{ form.csrf }}
-        <div class="form-group">
+    <div class="container"><br>
+      <div class="row align-items-center justify-content-center">
+        <div class="col-md-8 col-md-offset-2">
+          <form  action="" method="post" role="form">
+            {{ form.csrf }}
+            <div class="form-group">
 
-          <label for="name">Name:</label>
-          <input type="text" class="form-control" id="name" name="name" placeholder="Name?">
+              <label for="name">Name:</label>
+              <input type="text" class="form-control" id="name" name="name" placeholder="Name?">
+                <br>
+              <label for="phone">Phone:</label>
+              <input type="text" class="form-control" id="phone" name="phone" placeholder="Phone?">
+              <br>
+              <label for="profit">Expected profits (enter level from 1 to 10):</label>
+              <input type="text" class="form-control" id="profit" name="profit" placeholder="">
+              <br>
+              <label for="loss">Maximum loss (enter level from 1 to 10):</label>
+              <input type="text" class="form-control" id="loss" name="loss" placeholder="">
+
+            </div>
             <br>
-          <label for="phone">Phone:</label>
-          <input type="text" class="form-control" id="phone" name="phone" placeholder="Phone?">
-	    <br>
-	  <label for="profit">Expected profits (enter level from 1 to 10):</label>
-	  <input type="text" class="form-control" id="profit" name="profit" placeholder="">
-	    <br>
-	  <label for="loss">Maximum loss (enter level from 1 to 10):</label>
-	  <input type="text" class="form-control" id="loss" name="loss" placeholder="">
 
-	</div>
+            <center>
+              <button type="submit" class="btn btn-success">Submit</button>
+            </center>
+          </form>
+          <br>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+
+            {% for message in messages %}
+                {% if "Error" not in message[1]: %}
+                    <div class="alert alert-info">
+                    <strong>Success! </strong> {{ message[1] }}
+                    </div>
+                {% endif %}
+
+                {% if "Error" in message[1]: %}
+                    <div class="alert alert-danger">
+                    <strong>Error: </strong> {{ message[1] }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+        </div>
         <br>
-
-        <center>
-          <button type="submit" class="btn btn-success">Submit</button>
-        </center>
-      </form>
-
-      <br>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-
-        {% for message in messages %}
-            {% if "Error" not in message[1]: %}
-                <div class="alert alert-info">
-                <strong>Success! </strong> {{ message[1] }}
-                </div>
-            {% endif %}
-
-            {% if "Error" in message[1]: %}
-                <div class="alert alert-danger">
-                <strong>Error: </strong> {{ message[1] }}
-                </div>
-            {% endif %}
-        {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-    </div>
-    <br>
-    </div>
+      </div>
     </div>
   </body>
+  
+  <div class="footer navbar-fixed-bottom" style="background-color:#15224f;min-height:30px;width:100%">
+    <div class="container">
+      <div class="row">
+        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+          <div style="color: #fff;line-height: 30px;min-height: 30px;padding: 7px 0">
+            © 2021, D.Chen & J.Shen, All rights reserved
+          </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+          <div style="color: #fff;line-height: 30px;min-height: 30px;text-align: right">
+             <a href="#">DeFi Assessment</a> |  <a target="_blank" style="color: #fff" href="https://github.com/yuukidach/DeFi-Assessment">Github link</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>  
+
 </html>
