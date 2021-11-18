@@ -185,10 +185,10 @@ def model_train():
 def token_factor(model, currency):
     suffix = '-usd-max.csv'
     data = read_tokens(currency + suffix)
+    data = scaler.fit_transform(data)
     data = data.tail(10)
     last = data.tail(1).values[0, 0]
 
-    data = scaler.fit_transform(data)
     data = np.array(data, ndmin=10)
     data = np.reshape(data, (1, 10, 1))
 
