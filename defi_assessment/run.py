@@ -8,6 +8,7 @@ from pathlib import Path
 from flask import Flask, render_template, flash, request
 from wtforms import Form, validators, StringField
 from app.data import COLUMNS, get_table_data
+from app.suggest import get_suggestion
 
 app = Flask(__name__, template_folder='app/templates')
 app.config['SECRET_KEY'] = 'some_random_secret'
@@ -70,22 +71,22 @@ class ReusableForm(Form):
     surname = StringField('Surname:', validators=[validators.DataRequired()])
 
 
-@app.route("/form", methods=['GET', 'POST'])
-def hello():
+@app.route("/suggest", methods=['GET', 'POST'])
+def suggest():
     form = ReusableForm(request.form)
 
-    # print(form.errors)
     if request.method == 'POST':
-        name = request.form['name']
-        surname = request.form['surname']
-        benefit = request.form['benefit']
-        loss = request.form['loss']
+        name = request.form.get('name')
+        phone = request.form.get('phone')
+        profit_lv = int(request.form['profit'])
+        loss_lv = int(request.form['loss'])
 
-        if form.validate():
-            flash('Your are type of high-risk, high-yield. Suggest Compound!')
+        profit_lv, loss_lv, plat = get_suggestion(INDEX_DATA, 
+                                                  profit_lv, 
+                                                  loss_lv)
 
-        else:
-            flash('Error: All Fields are Required')
+        flash((f'Your are type of {loss_lv}-risk, {profit_lv}-yield.'
+               f'You are suggested to consider {plat}.'))
 
     return render_template('form.html', form=form)
 

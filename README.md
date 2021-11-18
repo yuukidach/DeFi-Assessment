@@ -1,3 +1,6 @@
-# DeFi Lending Evaluation
+# DeFi Assessement
 
-## Train by Yourself
+A project to perform risk assessment on different DeFi lending platforms.
+## Usage
+
+
