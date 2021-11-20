@@ -3,8 +3,8 @@ import pandas as pd
 from pathlib import Path
 from functools import reduce
 from tqdm.auto import tqdm
-from git_tool.gitcmd import GitCommit
-from git_tool.parser import get_subsys, get_dir
+from defi_assessment.git_tool.gitcmd import GitCommit
+from defi_assessment.git_tool.parser import get_subsys, get_dir
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

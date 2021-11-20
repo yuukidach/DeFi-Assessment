@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import List, Dict
-from modelling import contract, finance
+from defi_assessment.modelling import contract, finance
 from math import sqrt
 
 COLUMNS = [

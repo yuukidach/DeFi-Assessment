@@ -1,9 +1,10 @@
 import click
 from pathlib import Path
-from data_collection.contract import create_contract_datasets
-from data_collection.finance import create_finance_datasets
-from preprocess.contract import pre_process
-from modelling import contract, finance
+from .data_collection.contract import create_contract_datasets
+from .data_collection.finance import create_finance_datasets
+from .preprocess.contract import pre_process
+from .modelling import contract, finance
+
 
 
 @click.group()
@@ -25,6 +26,12 @@ def cli():
               default=Path(__file__).resolve().parents[1] / 'data/',
               help='Target directory to put collected data')
 def data_collection(force, contract, finance, csv, target):
+    """Collect raw data.
+
+    Collect data for smart contract risks and financial risks. Three folders
+    will be create: `contract/`, `social/` and `token_value`. The raw data in
+    `contract` folder need to be further processed with `process` subcommand.
+    """
     if contract:
         tgt_folder = target/'contract'
         create_contract_datasets(csv, tgt_folder, force)
@@ -42,7 +49,8 @@ def data_collection(force, contract, finance, csv, target):
                        / 'data/contract/final.csv'),
               help='Location to put newly created csv file.')
 def data_process(force, source, target):
-
+    """Process the data related to smart contracts.
+    """
     target = Path(target)
     if target.exists() and not force:
         return
@@ -58,15 +66,30 @@ def data_process(force, source, target):
               default=Path(__file__).resolve().parents[1] / 'models/',
               help='Location to save the model.')
 def train_model(source, target):
+    """Train models.
+
+    A Random Forest model for smart contract and a LSTM model for financial
+    risks.
+    """
     source = Path(source)
     target = Path(target)
     contract.train(source / 'contract/final.csv', target)
     finance.train(source, target)
 
 
+@click.command()
+@click.option('-p', '--port', default=8080, help='Port of the web server')
+def build_web(port):
+    """Create a simple local website to view the result.
+    """
+    from defi_assessment.run import app
+    app.run(port=port, debug=False)
+
+
 cli.add_command(data_collection, 'data')
 cli.add_command(data_process, 'process')
 cli.add_command(train_model, 'train')
+cli.add_command(build_web, 'web')
 
 
 if __name__ == '__main__':

@@ -5,8 +5,8 @@ import plotly.graph_objs as go
 from pathlib import Path
 from flask import Flask, render_template, flash, request
 from wtforms import Form, validators, StringField
-from app.data import COLUMNS, get_table_data
-from app.suggest import get_suggestion
+from .app.data import COLUMNS, get_table_data
+from .app.suggest import get_suggestion
 
 app = Flask(__name__, template_folder='app/templates')
 app.config['SECRET_KEY'] = 'some_random_secret'
