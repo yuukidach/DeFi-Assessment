@@ -6,7 +6,6 @@ from .preprocess.contract import pre_process
 from .modelling import contract, finance
 
 
-
 @click.group()
 def cli():
     pass
