@@ -48,6 +48,7 @@ This project is packed into a command-line tool with 4 subcommand:
 Usage: dass [OPTIONS] COMMAND [ARGS]...
 
 Options:
+  --version  Show the version and exit.
   --help  Show this message and exit.
 
 Commands:
