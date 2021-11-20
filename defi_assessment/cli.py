@@ -4,9 +4,11 @@ from defi_assessment.data_collection.contract import create_contract_datasets
 from defi_assessment.data_collection.finance import create_finance_datasets
 from defi_assessment.preprocess.contract import pre_process
 from defi_assessment.modelling import contract, finance
+from defi_assessment import __version__
 
 
 @click.group()
+@click.version_option(__version__)
 def cli():
     pass
 
