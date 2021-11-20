@@ -4,18 +4,18 @@ import tempfile
 import re
 import shlex
 import logging
-from typing import List, Union
-from subprocess import check_output, run
+from typing import Union
+from subprocess import check_output
 from collections import defaultdict
-from unicodedata import numeric
 from numpy import log2
-from .parser import *
+from .parser import get_subsys
 
 __all__ = ['GitCommit']
 
 logger = logging.getLogger(__name__)
 
 COMMIT_LEN = 10
+
 
 def _run_command(cmd: str) -> str:
     """ run command line and return output
@@ -38,13 +38,13 @@ def _run_command(cmd: str) -> str:
 
 def _run_single_pipeline_commands(cmds: list) -> str:
     cmd1, cmd2 = cmds[0], cmds[1]
-    ps1 = subprocess.Popen(shlex.split(cmd1, posix=False), stdout=subprocess.PIPE)
+    ps1 = subprocess.Popen(shlex.split(cmd1, posix=False),
+                           stdout=subprocess.PIPE)
     stdout = check_output(shlex.split(cmd2, posix=False),
-                          stdin=ps1.stdout, 
+                          stdin=ps1.stdout,
                           encoding='utf-8').rstrip('\n')
     ps1.wait()
     return stdout
-
 
 
 def _std_commit(commit: str) -> str:
@@ -75,7 +75,7 @@ class GitCommit():
 
     def __exit__(self, exc_type, exc_value, traceback):
         os.chdir(self.cwd)
-        # remove temporary directory 
+        # remove temporary directory
         self.repo_dir.cleanup()
 
     def _clone_repo(self, dir: str):
@@ -88,8 +88,8 @@ class GitCommit():
         """
         cmd = f'git clone {self.url} {dir}'
         _run_command(cmd)
-        
-    def _filter_by_1st_line(self, commits: list, key: str, exist: bool=True):
+
+    def _filter_by_1st_line(self, commits: list, key: str, exist: bool = True):
         """ Filter commits by the first line of their commit messages
 
         Parameters
@@ -113,13 +113,13 @@ class GitCommit():
         logger.info(f'Now, {len(wanted_commits)} exist.')
 
         return wanted_commits
-    
+
     @staticmethod
     def standardize_commit_id(commit: Union[list, str]):
         if isinstance(commit, str):
             return _std_commit(commit)
         return [_std_commit(c) for c in commit]
-            
+
     def get_log(self, commit: str = None) -> str:
         """ Collect raw git logs
 
@@ -140,8 +140,8 @@ class GitCommit():
         output = _run_command(cmd)
 
         return output
-    
-    def get_commits(self, key: str=None) -> list:
+
+    def get_commits(self, key: str = None) -> list:
         """Get list of commmits
 
         Args:
@@ -164,29 +164,29 @@ class GitCommit():
         commits = self.standardize_commit_id(commits)
 
         return commits
-   
+
     def get_author(self, commit: str) -> str:
         cmd = f'git log --pretty=format:%an -n 1 {commit}'
         out = _run_command(cmd)
         return out
-    
+
     def get_1st_commits(self) -> list:
         # commit repos have more than 1 root commit
-        cmd = f'git rev-list --all --max-parents=0 HEAD'
+        cmd = 'git rev-list --all --max-parents=0 HEAD'
         output = _run_command(cmd)
         commits = [c for c in output.split('\n') if c]
         return self.standardize_commit_id(commits)
-    
+
     def is_in_1st_commits(self, commit: str) -> bool:
         res = False
         for c in self.init_commit:
-            len1, len2= len(c), len(commit)
+            len1, len2 = len(c), len(commit)
             if len1 < len2:
                 res |= (c == commit[:len1])
             else:
                 res |= (c[:len2] == commit)
         return res
-    
+
     def get_msg(self, commit: str) -> str:
         """Get commit messages
 
@@ -205,7 +205,7 @@ class GitCommit():
         cmd = f'git --no-pager diff -U0 {commit}^ {commit}'
         output = _run_command(cmd)
         return output
-    
+
     def get_fix_commits(self) -> list:
         """ Get commit ids related to bug fix
 
@@ -218,11 +218,11 @@ class GitCommit():
         merge_commits = self.get_commits('merge')
         # ignore merge commits which will lead to hundreds of changed lines
         commits = set(fix_commits) - set(merge_commits)
-        
+
         commits = self._filter_by_1st_line(list(commits), 'fix')
         return commits
-    
-    def get_changed_filenames(self, commit: str, filter: str=None) -> list:
+
+    def get_changed_filenames(self, commit: str, filter: str = None) -> list:
         """ Get changed files in a commit
 
         Parameters
@@ -251,7 +251,7 @@ class GitCommit():
         filenames = [f for f in output.split('\n') if f]
 
         return filenames
-    
+
     def get_changed_lines(self, commit: str, fnames: list) -> dict:
         """ Get changed lines in a commit
 
@@ -271,23 +271,24 @@ class GitCommit():
         for fname in fnames:
             cmd = f'git --no-pager diff {commit}^ {commit} -U0 -- {fname}'
             output = _run_command(cmd)
-            headers = [l for l in output.split('\n') if re.match(r'^@@.+@@$', l)]
-            
+            headers = [line for line in output.split('\n')
+                       if re.match(r'^@@.+@@$', line)]
+
             # header will look like @@ -62,0 +63,3 @@
             for header in headers:
-                match = re.match('@@ (\-.*) (\+.*) @@', header).groups()
+                match = re.match(r'@@ (\-.*) (\+.*) @@', header).groups()
 
                 changes = []
                 for change in match:
-                    # header looks like @@ -198 +198 @@ if only one line changes
+                    # header looks like @@ -19 +19 @@ if only one line changes
                     if ',' in change:
                         start, n_lines = change.split(',')
                     else:
                         start, n_lines = change, '1'
                     changes.append((start, n_lines))
-                
+
                 fname_lines[fname].append(changes)
-        
+
         return fname_lines
 
     def blame_old_lines(self, commit: str, fname_lines: dict) -> dict:
@@ -312,27 +313,27 @@ class GitCommit():
                 # ignore unchanged commits
                 if (n <= 0):
                     continue
-                start = item[0][0][1:] # ingore '-' signal
+                start = item[0][0][1:]  # ingore '-' signal
                 cmd = (
-                    f'git --no-pager blame -L{start},+{n} --abbrev={COMMIT_LEN} '
-                    f'{commit}^ -- {fname}'
+                    f'git --no-pager blame -L{start},+{n} '
+                    f'--abbrev={COMMIT_LEN} {commit}^ -- {fname}'
                 )
                 output = _run_command(cmd)
                 lines = output.split('\n')
-                bug_sets[fname].update([l.split(' ')[0] for l in lines])
+                bug_sets[fname].update([line.split(' ')[0] for line in lines])
 
         bug_commits = defaultdict(list)
         for fname, commits in bug_sets.items():
             bug_commits[fname] = self.standardize_commit_id(commits)
         return bug_commits
-    
+
     def get_numstat(self, commit: str) -> list:
         """ Return short stats of the commit
 
         Parameters
         ----------
         commit : str
-            commit id 
+            commit id
 
         Returns
         -------
@@ -341,7 +342,7 @@ class GitCommit():
         """
         if self.is_in_1st_commits(commit):
             return None
-        res = [0 , 0]
+        res = [0, 0]
         cmd = f'git diff --numstat {commit}^ {commit}'
         out = _run_command(cmd)
         for line in [line for line in out.split('\n') if line]:
@@ -350,7 +351,7 @@ class GitCommit():
                 res[0] += int(cnt.group(1))
                 res[1] += int(cnt.group(2))
         return res
-    
+
     def get_entropy(self, commit: str) -> float:
         if self.is_in_1st_commits(commit):
             return None
@@ -362,7 +363,7 @@ class GitCommit():
             # out = _run_single_pipeline_commands([cmd, f'wc -l'])
             out = _run_command(cmd)
             cnt = int(out)
-            
+
             # get inserted lines
             cmd = f'git diff --numstat {commit}^ {commit} -- "{fname}"'
             out = _run_command(cmd)
@@ -374,7 +375,7 @@ class GitCommit():
                 continue
             ent += -added/cnt*log2(added/cnt)
         return ent
-        
+
     def get_former_commits(self, commit: str) -> tuple:
         """Return proir commits and developers who have changed the files.
         """
@@ -384,21 +385,26 @@ class GitCommit():
         fnames = self.get_changed_filenames(commit, filter='d')
         for fname in fnames:
             cmd = (
-                f'git --no-pager log --pretty=format:%h,%an --abbrev={COMMIT_LEN} '
-                f'--follow {commit} -- "{fname}"'
+                f'git --no-pager log --pretty=format:%h,%an '
+                f'--abbrev={COMMIT_LEN} --follow {commit} -- "{fname}"'
             )
             out = _run_command(cmd)
-            lines = [l for l in out.split('\n') if l]
-            for l in lines:
-                l  = l.split(',')
-                h = self.standardize_commit_id(l[0]); an = l[1]
+            lines = [line for line in out.split('\n') if line]
+            for line in lines:
+                line = line.split(',')
+                h = self.standardize_commit_id(line[0])
+                an = line[1]
                 if h == commit:
                     anset.add(an)
                 else:
-                    hset.add(h); anset.add(an)
+                    hset.add(h)
+                    anset.add(an)
         return hset, anset
-    
-    def get_author_time(self, commit: str, fname: str=None, skip: int=0) -> int:
+
+    def get_author_time(self,
+                        commit: str,
+                        fname: str = None,
+                        skip: int = 0) -> int:
         cmd = f'git log --pretty=format:%at -n 1 --skip {skip} {commit}'
         if fname is not None:
             cmd += f' --follow -- "{fname}"'
@@ -420,11 +426,11 @@ class GitCommit():
                 continue
             interval += x - float(t)
             cnt += 1
-            
+
         if cnt == 0:
             return 0.0
-        return interval / cnt / 3600 # turn into hours
-    
+        return interval / cnt / 3600  # turn into hours
+
     def get_author_exp(self, commit: str) -> set:
         """Get commits made by the same author before
         """
@@ -437,7 +443,7 @@ class GitCommit():
         out = [c for c in out.split('\n') if c]
         out = self.standardize_commit_id(out)
         return set(out)
-    
+
     def get_author_recent_exp(self, commit: str):
         commits = self.get_author_exp(commit)
         rexp = 0.0
@@ -446,7 +452,7 @@ class GitCommit():
             t = self.get_author_time(c)
             rexp += 1.0 / (1 + (x-t)/24/7)
         return rexp
-    
+
     def get_author_subssys_exp(self, commit: str):
         commits = self.get_author_exp(commit)
         fnames = self.get_changed_filenames(commit, 'rd')
@@ -454,11 +460,11 @@ class GitCommit():
         cnt = 0
         for c in commits:
             fnames = self.get_changed_filenames(c, 'ad')
-            subs = get_subsys(fnames) 
+            subs = get_subsys(fnames)
             if subs0 & subs:
                 cnt += 1
         return cnt
-    
+
     def get_author_proportion(self, commit: str):
         commits = self.get_author_exp(commit)
         related_commits, _ = self.get_former_commits(commit)
@@ -476,4 +482,3 @@ if __name__ == '__main__':
         print(f_l)
         bug_commits = gc.blame_old_lines(commits[0], f_l)
         print(bug_commits)
-        

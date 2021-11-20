@@ -17,8 +17,9 @@ import requests
 dir_token = 'data/token_value/'
 dir_esg = 'data/social/'
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/87.0.4280.66 Safari/537.36 '
+    'user-agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                   'AppleWebKit/537.36 (KHTML, like Gecko) '
+                   'Chrome/87.0.4280.66 Safari/537.36 ')
 }
 scaler = MinMaxScaler()
 
@@ -63,15 +64,27 @@ def data_process(name):
 # get all the Cryptocurrency data
 def get_data(source: Path):
     suffix = '-usd-max.csv'
-    aave_x_train, aave_y_train, aave_x_test, aave_y_test = data_process(source / f'aave{suffix}')
-    comp_x_train, comp_y_train, comp_x_test, comp_y_test = data_process(source / f'compound{suffix}')
-    cream_x_train, cream_y_train, cream_x_test, cream_y_test = data_process(source / f'cream{suffix}')
-    tru_x_train, tru_y_train, tru_x_test, tru_y_test = data_process(source / f'truefi{suffix}')
+    aave_x_train, aave_y_train, aave_x_test, aave_y_test = \
+        data_process(source / f'aave{suffix}')
+    comp_x_train, comp_y_train, comp_x_test, comp_y_test = \
+        data_process(source / f'compound{suffix}')
+    cream_x_train, cream_y_train, cream_x_test, cream_y_test = \
+        data_process(source / f'cream{suffix}')
+    tru_x_train, tru_y_train, tru_x_test, tru_y_test = \
+        data_process(source / f'truefi{suffix}')
 
-    x_train = np.concatenate((aave_x_train, comp_x_train, cream_x_train, tru_x_train), axis=0)
-    y_train = np.concatenate((aave_y_train, comp_y_train, cream_y_train, tru_y_train), axis=0)
-    x_test = np.concatenate((aave_x_test, comp_x_test, cream_x_test, tru_x_test), axis=0)
-    y_test = np.concatenate((aave_y_test, comp_y_test, cream_y_test, tru_y_test), axis=0)
+    x_train = np.concatenate(
+        (aave_x_train, comp_x_train, cream_x_train, tru_x_train), axis=0
+    )
+    y_train = np.concatenate(
+        (aave_y_train, comp_y_train, cream_y_train, tru_y_train), axis=0
+    )
+    x_test = np.concatenate(
+        (aave_x_test, comp_x_test, cream_x_test, tru_x_test), axis=0
+    )
+    y_test = np.concatenate(
+        (aave_y_test, comp_y_test, cream_y_test, tru_y_test), axis=0
+    )
 
     return x_train, x_test, y_train, y_test
 
@@ -79,14 +92,22 @@ def get_data(source: Path):
 # train the model
 def train_lstm(x_train, y_train, x_test, y_test):
     model = Sequential()
-    model.add(LSTM(units=32, return_sequences=True, input_shape=(x_train.shape[1], 1), dropout=0.2))
+    model.add(
+        LSTM(units=32,
+             return_sequences=True,
+             input_shape=(x_train.shape[1], 1),
+             dropout=0.2)
+    )
     model.add(LSTM(units=32, return_sequences=True, dropout=0.2))
     model.add(LSTM(units=32, dropout=0.2))
     model.add(Dense(units=1))
 
-    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+    model.compile(optimizer='adam',
+                  loss='mean_squared_error',
+                  metrics=['accuracy'])
     history = LossHistory()
-    model.fit(x_train, y_train, batch_size=16, epochs=30, validation_data=(x_test, y_test), callbacks=[history])
+    model.fit(x_train, y_train, batch_size=16, epochs=30,
+              validation_data=(x_test, y_test), callbacks=[history])
     history.loss_plot('epoch')
     return model
 
@@ -221,14 +242,17 @@ def var_factor(currency):
 
 
 def liquidity_factor(currency):
-    url = "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=AAVE,COMP,CREAM,ALCX,DYDX,TRU&tsyms=USD"
+    url = ('https://min-api.cryptocompare.com/data/pricemultifull?fsyms='
+           'AAVE,COMP,CREAM,ALCX,DYDX,TRU&tsyms=USD')
     response = get_response(url)
-    liquidity_factor_value = {'aave': response['RAW']['AAVE']['USD']['VOLUME24HOUR'],
-                              'compound': response['RAW']['COMP']['USD']['VOLUME24HOUR'],
-                              'cream': response['RAW']['CREAM']['USD']['VOLUME24HOUR'],
-                              'alchemix': response['RAW']['ALCX']['USD']['VOLUME24HOUR'],
-                              'dydx': response['RAW']['DYDX']['USD']['VOLUME24HOUR'],
-                              'truefi': response['RAW']['TRU']['USD']['VOLUME24HOUR']}
+    liquidity_factor_value = {
+        'aave': response['RAW']['AAVE']['USD']['VOLUME24HOUR'],
+        'compound': response['RAW']['COMP']['USD']['VOLUME24HOUR'],
+        'cream': response['RAW']['CREAM']['USD']['VOLUME24HOUR'],
+        'alchemix': response['RAW']['ALCX']['USD']['VOLUME24HOUR'],
+        'dydx': response['RAW']['DYDX']['USD']['VOLUME24HOUR'],
+        'truefi': response['RAW']['TRU']['USD']['VOLUME24HOUR']
+    }
     return liquidity_factor_value[currency]
 
 
@@ -237,7 +261,10 @@ def calculate_factors(currency, token_model):
     esg_factor_value = esg_factor(currency)
     var_factor_value = var_factor(currency)
     liquidity_factor_value = liquidity_factor(currency)
-    return token_factor_value, esg_factor_value, var_factor_value, liquidity_factor_value
+    return (token_factor_value,
+            esg_factor_value,
+            var_factor_value,
+            liquidity_factor_value)
 
 
 def get_finance_scores():
@@ -270,7 +297,3 @@ def get_finance_scores():
 
 if __name__ == '__main__':
     print(get_finance_scores())
-    # x_train, x_test, y_train, y_test = get_data()
-    # cal_accuracy(x_test, y_test)
-    # predict_plot(x_test, y_test)
-    # model_train()

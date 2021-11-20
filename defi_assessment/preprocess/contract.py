@@ -1,7 +1,5 @@
 import re
-import nltk
 import pandas as pd
-import numpy as np
 from pathlib import Path
 from typing import List
 from loguru import logger
@@ -13,7 +11,7 @@ INGNORE_FILES = [
 
 
 def cnt_lines(lines):
-    lines = [l for l in lines.split('\n') if l]
+    lines = [line for line in lines.split('\n') if line]
     return len(lines)
 
 
@@ -33,12 +31,12 @@ def find_data_file(fdir: Path, suffix: str) -> list:
     fnames = []
     for dir in [d for d in fdir.iterdir() if d.is_dir()]:
         fnames.extend(dir.iterdir())
-        
+
     pat = re.compile(rf'^.+{suffix}$')
     return [f for f in fnames if pat.match(f.name)]
 
 
-def read_data(fnames: List[Path], type: str='csv') -> pd.DataFrame:
+def read_data(fnames: List[Path], type: str = 'csv') -> pd.DataFrame:
     """Read all data files and concatenate them
 
     Parameters
@@ -121,7 +119,7 @@ def clean_lines(lines: str):
            or re.match(r'^\+\+\+ .*', line) \
            or re.match(r'^--- .*', line):
             l2rm.append(idx)
-            
+
     l2rm = sorted(l2rm, reverse=True)
     for idx in l2rm:
         if idx < len(lines):
@@ -154,7 +152,7 @@ def split_changes(lines: str):
     return del_lines, add_lines
 
 
-def get_valid_log_content(lines: str, type: str='add'):
+def get_valid_log_content(lines: str, type: str = 'add'):
     for fname in INGNORE_FILES:
         lines = del_multiple_files(fname, lines)
     lines = clean_lines(lines)
@@ -178,13 +176,17 @@ def rm_special_words(txt: str) -> str:
         processed text
     """
     # remove special charaecters
-    txt = re.sub(r'[\!\#\$\%\&\(\)\*+\,\-\.\/\;\:\<\=\>\?\@\[\]\\\^\_\`\{\}\|\~\n]', ' ', txt)
+    txt = re.sub(
+        r'[\!\#\$\%\&\(\)\*+\,\-\.\/\;\:\<\=\>\?\@\[\]\\\^\_\`\{\}\|\~\n]',
+        ' ',
+        txt
+    )
     # replace number and string literals with sepcial tokens
     txt = re.sub(r"([\d ]+)", " <NUM> ", txt)
     txt = re.sub(r"(\".*?\")", " <STR> ", txt)
     txt = re.sub(r"(\'.*?\')", " <STR> ", txt)
     return txt
-    
+
 
 def pre_process(p: Path):
     logger.info("Start reading matrix.csv...")
@@ -193,21 +195,23 @@ def pre_process(p: Path):
     matrix_df.dropna(inplace=True)
     matrix_df.drop(['plat'], axis=1, inplace=True)
 
-    logger.info(f'Start reading commits.json...')
+    logger.info('Start reading commits.json...')
     fnames = find_data_file(p, 'commits.json')
     commit_df = read_data(fnames, 'json')
     commit_df.dropna(inplace=True)
-    commit_df['text'] = commit_df['changes'].apply(lambda x:rm_special_words(x))
-    commit_df.drop(['msg', 'plat', 'changes'], axis=1, inplace=True) 
-    
-    logger.info(f'Data pre-processing...')
+    commit_df['text'] = commit_df['changes'].apply(
+        lambda x: rm_special_words(x)
+    )
+    commit_df.drop(['msg', 'plat', 'changes'], axis=1, inplace=True)
+
+    logger.info('Data pre-processing...')
     cv = CountVectorizer()
     cv_fit = cv.fit_transform(commit_df['text'].tolist())
     commit_df['nw'] = cv_fit.toarray().sum(axis=1)
 
     idx = cv.get_feature_names().index('function')
-    commit_df['nfunc'] = cv_fit.toarray()[:,idx]
-    
+    commit_df['nfunc'] = cv_fit.toarray()[:, idx]
+
     df = pd.merge(matrix_df, commit_df, on=['commit', 'buggy'])
     df.drop(['text'], axis=1, inplace=True)
 

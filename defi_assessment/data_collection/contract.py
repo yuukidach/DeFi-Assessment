@@ -1,12 +1,10 @@
 import logging
-from re import T
-from numpy.lib.function_base import append
 import pandas as pd
 from pathlib import Path
 from functools import reduce
 from tqdm.auto import tqdm
-from git_tool.gitcmd import GitCommit
-from git_tool.parser import *
+from defi_assessment.git_tool.gitcmd import GitCommit
+from defi_assessment.git_tool.parser import get_subsys, get_dir
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -42,9 +40,9 @@ def create_fix_commit_csv(gc: GitCommit, csv: Path):
         csv (Path): file to save the result data
     """
     data = {
-        'fix_commit': [], 
-        'fname': [], 
-        'changed_lines': [], 
+        'fix_commit': [],
+        'fname': [],
+        'changed_lines': [],
         'bug_commits': []
     }
 
@@ -60,10 +58,10 @@ def create_fix_commit_csv(gc: GitCommit, csv: Path):
             data['fname'].append(fname)
             data['changed_lines'].append(fname_lines[fname])
             data['bug_commits'].append(commits)
-    
-    df =  pd.DataFrame(data)
+
+    df = pd.DataFrame(data)
     df.to_csv(csv, index=False)
-        
+
 
 def get_buggy_commits_from_fix_csv(csv: Path) -> list:
     """Get buggy commits from xxxx_fix_commit.csv
@@ -80,7 +78,7 @@ def get_buggy_commits_from_fix_csv(csv: Path) -> list:
     for commits in buggy_strs:
         commits = GitCommit.standardize_commit_id(commits.split(','))
         buggy_commits.update(commits)
-    
+
     return list(buggy_commits)
 
 
@@ -90,7 +88,7 @@ def create_bug_commit_json(gc: GitCommit, src_csv: Path, tgt_json: Path):
 
     logger.info(f'Number of total commits: {len(all_commits)}')
     logger.info(f'Number of buggy commits: {len(bug_commits)}')
-    
+
     data = {
         'commit': [],
         'msg': [],
@@ -105,10 +103,10 @@ def create_bug_commit_json(gc: GitCommit, src_csv: Path, tgt_json: Path):
         data['msg'].append(gc.get_msg(commit))
         data['changes'].append(gc.get_diff(commit))
         data['buggy'].append(commit in bug_commits)
-    
+
     df = pd.DataFrame(data)
     df.to_json(tgt_json, orient='table')
-    
+
 
 def create_git_matrix_csv(gc: GitCommit, src_csv: Path, tgt_csv: Path):
     all_commits = _get_all_simple_commits(gc)
@@ -116,26 +114,28 @@ def create_git_matrix_csv(gc: GitCommit, src_csv: Path, tgt_csv: Path):
     bug_commits = get_buggy_commits_from_fix_csv(src_csv)
 
     data = {
-        'commit':[], 'la':[], 'ld':[],
-        'ns':[], 'nd':[], 'nf':[], 'ent':[],
-        'nuc':[], 'ndev':[], 'inter':[], 
-        'exp':[], 'rexp':[], 'sexp':[], 'pod':[],
-        'fix':[], 'buggy':[]
+        'commit': [], 'la': [], 'ld': [],
+        'ns': [], 'nd': [], 'nf': [], 'ent': [],
+        'nuc': [], 'ndev': [], 'inter': [],
+        'exp': [], 'rexp': [], 'sexp': [], 'pod': [],
+        'fix': [], 'buggy': []
     }
-    
-    tbar= tqdm(all_commits)
+
+    tbar = tqdm(all_commits)
     for commit in tbar:
         tbar.set_description(f'Create matrix for {commit}')
         la, ld = gc.get_numstat(commit)
         fnames = gc.get_changed_filenames(commit)
         hset, anset = gc.get_former_commits(commit)
-        
+
         data['commit'].append(commit)
-        data['la'].append(la); data['ld'].append(ld) 
+        data['la'].append(la)
+        data['ld'].append(ld)
         data['ns'].append(len(get_subsys(fnames)))
         data['nd'].append(len(get_dir(fnames)))
         data['nf'].append(len(fnames))
-        data['nuc'].append(len(hset)); data['ndev'].append(len(anset))
+        data['nuc'].append(len(hset))
+        data['ndev'].append(len(anset))
         data['inter'].append(gc.get_aver_interval(commit))
         data['ent'].append(gc.get_entropy(commit))
         data['exp'].append(len(gc.get_author_exp(commit)))
@@ -144,14 +144,13 @@ def create_git_matrix_csv(gc: GitCommit, src_csv: Path, tgt_csv: Path):
         data['pod'].append(gc.get_author_proportion(commit))
         data['fix'].append(commit in fix_commits)
         data['buggy'].append(commit in bug_commits)
-    
-    df =  pd.DataFrame(data)
+
+    df = pd.DataFrame(data)
     df.to_csv(tgt_csv, index=False)
-    
 
 
-def create_contract_datasets(platform_csv: Path, 
-                             saved_dir: Path, 
+def create_contract_datasets(platform_csv: Path,
+                             saved_dir: Path,
                              force: bool):
     """ Create csv datasets for smart contracts.
 
@@ -173,20 +172,20 @@ def create_contract_datasets(platform_csv: Path,
         if _do_all_data_exist([fcsv, bjson, mcsv]) and not force:
             logger.info(f'All files related to {plat} smart contract exist.')
             continue
-        
+
         with GitCommit(git_addr) as gc:
             if force or not fcsv.exists():
                 logger.info(f'Get bug-fixed commit data from {plat}')
                 create_fix_commit_csv(gc, fcsv)
             else:
                 logger.info(f'Data exists. Skip collect data {fcsv}.')
-            
+
             if force or not bjson.exists():
                 logger.info(f'Get buggy commits data from {plat}')
                 create_bug_commit_json(gc, fcsv, bjson)
             else:
                 logger.info(f'Data exists. Skip collect data {bjson}')
-                
+
             if force or not mcsv.exists():
                 logger.info(f'Get git matrixes from {plat}')
                 create_git_matrix_csv(gc, fcsv, mcsv)

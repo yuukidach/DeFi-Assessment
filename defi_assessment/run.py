@@ -1,21 +1,19 @@
 import json
-import csv
 import plotly
 import pandas as pd
-import numpy as np
 import plotly.graph_objs as go
 from pathlib import Path
 from flask import Flask, render_template, flash, request
 from wtforms import Form, validators, StringField
-from app.data import COLUMNS, get_table_data
-from app.suggest import get_suggestion
+from .app.data import COLUMNS, get_table_data
+from .app.suggest import get_suggestion
 
 app = Flask(__name__, template_folder='app/templates')
 app.config['SECRET_KEY'] = 'some_random_secret'
 
-INDEX_DATA=get_table_data(Path('docs/platforms.csv'),
-                          Path('data/contract/final.csv'),
-                          Path('models/random_forest.joblib'))
+INDEX_DATA = get_table_data(Path('docs/platforms.csv'),
+                            Path('data/contract/final.csv'),
+                            Path('models/random_forest.joblib'))
 
 
 @app.route('/')
@@ -76,13 +74,13 @@ def suggest():
     form = ReusableForm(request.form)
 
     if request.method == 'POST':
-        name = request.form.get('name')
-        phone = request.form.get('phone')
+        # name = request.form.get('name')
+        # phone = request.form.get('phone')
         profit_lv = int(request.form['profit'])
         loss_lv = int(request.form['loss'])
 
-        profit_lv, loss_lv, plat = get_suggestion(INDEX_DATA, 
-                                                  profit_lv, 
+        profit_lv, loss_lv, plat = get_suggestion(INDEX_DATA,
+                                                  profit_lv,
                                                   loss_lv)
 
         flash((f'Your are type of {loss_lv}-risk, {profit_lv}-yield.'
@@ -93,4 +91,3 @@ def suggest():
 
 if __name__ == '__main__':
     app.run(port=8080, debug=False)
-    

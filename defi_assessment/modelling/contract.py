@@ -7,7 +7,6 @@ import joblib
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from typing import List, Union
 from loguru import logger
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -20,7 +19,7 @@ def get_dataset(src: Path):
     train, test = train_test_split(df, test_size=0.3)
     print(f'Status of train set:\n{train["buggy"].value_counts()}')
     print(f'Status of test set:\n{test["buggy"].value_counts()}')
-    
+
     train_x = train.drop(['commit', 'buggy'], axis=1)
     train_y = train['buggy']
 
@@ -40,7 +39,7 @@ def evaluate_model(model, test_x, test_y):
     cmtx = pd.DataFrame(confusion_matrix(test_y, pred, labels=unique_label),
                         index=['true:{:}'.format(x) for x in unique_label],
                         columns=['pred:{:}'.format(x) for x in unique_label])
-    logger.info(f'Predicting with default threshold...')
+    logger.info('Predicting with default threshold...')
     print(report)
     print(cmtx)
 
@@ -49,16 +48,16 @@ def evaluate_model(model, test_x, test_y):
     max_score = 0
     th = 0
     for i in range(1, 100):
-        pred = (pred_prob[:,1] >= i/100)
+        pred = (pred_prob[:, 1] >= i/100)
         score = f1_score(test_y, pred)
         if score > max_score:
             max_score = score
             th = i/100
 
     logger.info(f'Threshhold: {th}; Max-Score: {max_score}')
-    pred = (pred_prob[:,1] >= th)
+    pred = (pred_prob[:, 1] >= th)
     report = classification_report(test_y, pred)
-    logger.info(f'Predicting with best threshold about f1-score')
+    logger.info('Predicting with best threshold about f1-score')
     print(report)
     print(confusion_matrix(test_y, pred))
 
@@ -69,11 +68,11 @@ def train(src: Path, dir: Path):
     dir.mkdir(parents=True, exist_ok=True)
     train_x, train_y, test_x, test_y = get_dataset(src)
     rf = RandomForestClassifier(
-        n_estimators=300, 
-        criterion='entropy', 
+        n_estimators=300,
+        criterion='entropy',
         max_features=6
     )
-    logger.info(f'Fitting model...')
+    logger.info('Fitting model...')
     rf.fit(train_x, train_y)
     evaluate_model(rf, test_x, test_y)
     p = dir / 'random_forest.joblib'
@@ -81,7 +80,7 @@ def train(src: Path, dir: Path):
     logger.info(f'Model savd in {p}')
 
 
-def predict_prob(x, mpath: Path, th: float=0.5):
+def predict_prob(x, mpath: Path, th: float = 0.5):
     model = joblib.load(mpath)
     pred = model.predict_proba(x)
-    return pred[:,1]
+    return pred[:, 1]
