@@ -17,14 +17,13 @@ def cli():
               help='Collect data of smart contracts.')
 @click.option('--finance/--no-finance', default=True,
               help='Collect data of finanacial risks.')
-@click.option('-c', '--csv', type=click.Path(exists=True),
-              default=(Path(__file__).resolve().parents[1]
-                       / 'docs/platforms.csv'),
+@click.option('-s', '--source', type=click.Path(exists=True),
+              default=Path.cwd() / 'docs/platforms.csv',
               help='Location of platforms.csv.')
 @click.option('-t', '--target', type=click.Path(),
-              default=Path(__file__).resolve().parents[1] / 'data/',
+              default=Path.cwd() / 'data/',
               help='Target directory to put collected data')
-def data_collection(force, contract, finance, csv, target):
+def data_collection(force, contract, finance, source, target):
     """Collect raw data.
 
     Collect data for smart contract risks and financial risks. Three folders
@@ -33,7 +32,7 @@ def data_collection(force, contract, finance, csv, target):
     """
     if contract:
         tgt_folder = target/'contract'
-        create_contract_datasets(csv, tgt_folder, force)
+        create_contract_datasets(source, tgt_folder, force)
     if finance:
         create_finance_datasets(target, force)
 
@@ -41,11 +40,10 @@ def data_collection(force, contract, finance, csv, target):
 @click.command()
 @click.option('-f', '--force', is_flag=True, help='Force to collect data')
 @click.option('-s', '--source', type=click.Path(exists=True),
-              default=Path(__file__).resolve().parents[1] / 'data/contract',
+              default=Path.cwd() / 'data/contract',
               help='Directory of collected data')
 @click.option('-t', '--target', type=click.Path(),
-              default=(Path(__file__).resolve().parents[1]
-                       / 'data/contract/final.csv'),
+              default=(Path.cwd() / 'data/contract/final.csv'),
               help='Location to put newly created csv file.')
 def data_process(force, source, target):
     """Process the data related to smart contracts.
@@ -59,10 +57,10 @@ def data_process(force, source, target):
 
 @click.command()
 @click.option('-s', '--source', type=click.Path(exists=True),
-              default=Path(__file__).resolve().parents[1] / 'data/',
+              default=Path.cwd() / 'data/',
               help='Path of processed data.')
 @click.option('-t', '--target', type=click.Path(),
-              default=Path(__file__).resolve().parents[1] / 'models/',
+              default=Path.cwd() / 'models/',
               help='Location to save the model.')
 def train_model(source, target):
     """Train models.
