@@ -1,5 +1,7 @@
 # DeFi Assessement (dass)
 
+![](https://img.shields.io/github/license/yuukidach/DeFi-Assessment)
+
 A prototype project to perform risk assessment on different DeFi lending platforms.
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
