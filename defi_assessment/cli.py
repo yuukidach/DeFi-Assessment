@@ -1,9 +1,9 @@
 import click
 from pathlib import Path
-from .data_collection.contract import create_contract_datasets
-from .data_collection.finance import create_finance_datasets
-from .preprocess.contract import pre_process
-from .modelling import contract, finance
+from defi_assessment.data_collection.contract import create_contract_datasets
+from defi_assessment.data_collection.finance import create_finance_datasets
+from defi_assessment.preprocess.contract import pre_process
+from defi_assessment.modelling import contract, finance
 
 
 @click.group()
