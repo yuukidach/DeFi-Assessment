@@ -57,15 +57,17 @@ Commands:
   web      Create a simple local website to view the result.
 ```
 
-### Data collection
-
-`data` command is used to collect data for training and assessment (prediction). All of the other three commands are dependent on it. Make sure to run this command at beginning.
-
 The workflow of the 4 commands should be:
 
 ```shell
 data -> process -> train -> web
 ```
+
+### Data collection
+
+`data` command is used to collect data for training and assessment (prediction). All of the other three commands are dependent on it. Make sure to run this command at beginning.
+
+To collect data for smart contracts, `docs/platforms.csv` shoud be used. This file provides the github repository link for different smart contracts. And it also provide intermediary status for corresponding platforms.
 
 ### Data process
 
