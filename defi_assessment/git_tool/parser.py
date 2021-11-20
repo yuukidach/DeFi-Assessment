@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from numpy import arctan
-
 __all__ = ['get_subsys', 'get_dir']
 
 
@@ -10,7 +8,7 @@ def get_subsys(fnames: list) -> int:
     for fname in fnames:
         if fname == '':
             continue
-        
+
         p = Path(fname)
         parts = p.parts
         if (len(parts) == 1):

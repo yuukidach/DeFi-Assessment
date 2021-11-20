@@ -105,6 +105,6 @@ def get_table_data(src: Path, ref: Path, ctx_mpath: Path) -> List[Dict]:
         cen_score = get_intermediary_score(row['oracle'], row['admin'])
         fin_score = format_score(fin_scores.get(name, 0)*100)
         total_score = get_total_score(ctx_score, cen_score, fin_score)
-        data.append({'name': name, 'ctx': ctx_score, 'fin': fin_score, 
+        data.append({'name': name, 'ctx': ctx_score, 'fin': fin_score,
                      'cen': cen_score, 'total': total_score})
     return data

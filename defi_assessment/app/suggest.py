@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def identify_user_level(level: int) -> str:
     if level < 4:
         return 'low'
@@ -20,7 +21,7 @@ def match_platform(plats: list, profit_lv: str, risk_lv: str) -> dict:
         n = n//3
     elif risk_lv == 'medium':
         n == n // 3 * 2
-    
+
     df = df.iloc[0:n, :]
     df.sort_values(by='fin', inplace=True, ascending=False)
     return df.iloc[0]['name']
