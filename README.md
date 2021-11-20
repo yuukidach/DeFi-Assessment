@@ -26,8 +26,18 @@ A prototype project to perform risk assessment on different DeFi lending platfor
 
 ## Installation
 
+From local repository:
+
 ```shell
-pip3 install .
+pip3 install .[cpu]  # for tensorflow with cpu only
+pip3 install .[gpu]  # for tensorflow-gpu
+```
+
+From PyPI:
+
+```shell
+pip3 install DeFi-Assessment[cpu]
+pip3 install DeFi-Assessment[gpu]
 ```
 
 ## Usage
