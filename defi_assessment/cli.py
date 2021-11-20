@@ -32,6 +32,7 @@ def data_collection(force, contract, finance, source, target):
     will be create: `contract/`, `social/` and `token_value`. The raw data in
     `contract` folder need to be further processed with `process` subcommand.
     """
+    target = Path(target)
     if contract:
         tgt_folder = target/'contract'
         create_contract_datasets(source, tgt_folder, force)
