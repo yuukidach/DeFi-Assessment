@@ -4,9 +4,11 @@ from defi_assessment.data_collection.contract import create_contract_datasets
 from defi_assessment.data_collection.finance import create_finance_datasets
 from defi_assessment.preprocess.contract import pre_process
 from defi_assessment.modelling import contract, finance
+from defi_assessment import __version__
 
 
 @click.group()
+@click.version_option(__version__)
 def cli():
     pass
 
@@ -30,6 +32,7 @@ def data_collection(force, contract, finance, source, target):
     will be create: `contract/`, `social/` and `token_value`. The raw data in
     `contract` folder need to be further processed with `process` subcommand.
     """
+    target = Path(target)
     if contract:
         tgt_folder = target/'contract'
         create_contract_datasets(source, tgt_folder, force)
