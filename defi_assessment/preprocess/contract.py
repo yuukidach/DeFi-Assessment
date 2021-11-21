@@ -202,7 +202,6 @@ def pre_process(p: Path):
         lambda x: re.sub(r'(_matrix$)', '', x)
     )
     print(matrix_df.head())
-    # matrix_df.drop(['plat'], axis=1, inplace=True)
 
     logger.info('Start reading commits.json...')
     fnames = find_data_file(p, 'commits.json')
@@ -210,7 +209,6 @@ def pre_process(p: Path):
     commit_df['text'] = commit_df['changes'].apply(
         lambda x: get_clean_log(x)
     )
-    # commit_df.drop(['msg', 'plat', 'changes'], axis=1, inplace=True)
     commit_df.drop(['msg', 'changes'], axis=1, inplace=True)
     commit_df['plat'] = commit_df['plat'].apply(
         lambda x: re.sub(r'(_buggy_commits$)', '', x)
@@ -226,8 +224,8 @@ def pre_process(p: Path):
     commit_df['nfunc'] = cv_fit.toarray()[:, idx]
 
     df = pd.merge(matrix_df, commit_df, on=['commit', 'plat', 'buggy'])
-    print(df.head())
     df.drop(['text'], axis=1, inplace=True)
     df.dropna(inplace=True)
+    print(df.head())
 
     return df

@@ -75,7 +75,7 @@ def train_model(source, target):
     """
     source = Path(source)
     target = Path(target)
-    contract.train(source / 'contract/final.csv', target)
+    contract.train(source / 'contract/contract_overview.csv', target)
     finance.train(source, target)
 
 
