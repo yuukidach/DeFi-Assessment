@@ -404,7 +404,23 @@ class GitCommit():
     def get_author_time(self,
                         commit: str,
                         fname: str = None,
-                        skip: int = 0) -> int:
+                        skip: int = 0) -> float:
+        """get unix author time
+
+        Parameters
+        ----------
+        commit : str
+            commit id
+        fname : str, optional
+            filename, by default None
+        skip : int, optional
+            how many commit to skip, by default 0
+
+        Returns
+        -------
+        float
+            unix timestamp
+        """
         cmd = f'git log --pretty=format:%at -n 1 --skip {skip} {commit}'
         if fname is not None:
             cmd += f' --follow -- "{fname}"'

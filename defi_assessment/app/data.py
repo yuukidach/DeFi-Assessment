@@ -14,6 +14,11 @@ COLUMNS = [
 ]
 
 
+def format_score(score):
+    score = round(score, 2)
+    return str(score) + '%'
+
+
 def get_contract_row_data(commit: str, df: pd.DataFrame) -> np.array:
     """Get a single row of dataframe based on commit id
 
@@ -33,11 +38,6 @@ def get_contract_row_data(commit: str, df: pd.DataFrame) -> np.array:
     df1 = df1.drop(['commit', 'buggy'], axis=1)
     a = df1.iloc[0].to_numpy().reshape((1, -1))
     return a
-
-
-def format_score(score):
-    score = round(score, 2)
-    return str(score) + '%'
 
 
 def get_contract_score(commit: str, df: pd.DataFrame, mpath: Path) -> float:
@@ -100,8 +100,9 @@ def get_table_data(src: Path, ref: Path, ctx_mpath: Path) -> List[Dict]:
     fin_scores = finance.get_finance_scores()
     for _, row in df.iterrows():
         name = row['platform']
-        commit = row['commit']
-        ctx_score = get_contract_score(commit, ref_df, ctx_mpath)
+        # commit = row['commit']
+        # ctx_score = get_contract_score(commit, ref_df, ctx_mpath)
+        ctx_score = get_contract_score(name, ctx_mpath)
         cen_score = get_intermediary_score(row['oracle'], row['admin'])
         fin_score = format_score(fin_scores.get(name, 0)*100)
         total_score = get_total_score(ctx_score, cen_score, fin_score)

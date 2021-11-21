@@ -1,13 +1,16 @@
-import logging
+import sys
 import pandas as pd
 from pathlib import Path
 from functools import reduce
 from tqdm.auto import tqdm
+from loguru import logger
 from defi_assessment.git_tool.gitcmd import GitCommit
 from defi_assessment.git_tool.parser import get_subsys, get_dir
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+fmt = ('<green>{time:YYYY-MM-DD HH:mm:ss}</green> | {level} | '
+       '<lvl>{message}</lvl>')
+logger.remove()
+logger.add(sys.stdout, format=fmt)
 
 
 def _do_all_data_exist(paths: list) -> bool:
@@ -109,55 +112,80 @@ def create_bug_commit_json(gc: GitCommit, src_csv: Path, tgt_json: Path):
 
 
 def create_git_matrix_csv(gc: GitCommit, src_csv: Path, tgt_csv: Path):
+    if tgt_csv.exists():
+        logger.info(f'Incremental sync of {tgt_csv}')
+        data = pd.read_csv(tgt_csv)
+    else:
+        data = pd.DataFrame(columns=['commit', 'la', 'ld', 'ns', 'nd', 'nf',
+                                     'ent', 'nuc', 'ndev', 'inter', 'exp',
+                                     'rexp', 'sexp', 'pod', 'fix', 'buggy',
+                                     'time'])
+
     all_commits = _get_all_simple_commits(gc)
     fix_commits = gc.get_fix_commits()
     bug_commits = get_buggy_commits_from_fix_csv(src_csv)
 
-    data = {
-        'commit': [], 'la': [], 'ld': [],
-        'ns': [], 'nd': [], 'nf': [], 'ent': [],
-        'nuc': [], 'ndev': [], 'inter': [],
-        'exp': [], 'rexp': [], 'sexp': [], 'pod': [],
-        'fix': [], 'buggy': []
-    }
-
     tbar = tqdm(all_commits)
+    rows = []
     for commit in tbar:
         tbar.set_description(f'Create matrix for {commit}')
-        la, ld = gc.get_numstat(commit)
-        fnames = gc.get_changed_filenames(commit)
-        hset, anset = gc.get_former_commits(commit)
+        row = data.query(f'commit == "{commit}"').to_dict(orient='records')
+        if len(row) == 0:
+            row = {}
+        else:
+            row = row[0]
 
-        data['commit'].append(commit)
-        data['la'].append(la)
-        data['ld'].append(ld)
-        data['ns'].append(len(get_subsys(fnames)))
-        data['nd'].append(len(get_dir(fnames)))
-        data['nf'].append(len(fnames))
-        data['nuc'].append(len(hset))
-        data['ndev'].append(len(anset))
-        data['inter'].append(gc.get_aver_interval(commit))
-        data['ent'].append(gc.get_entropy(commit))
-        data['exp'].append(len(gc.get_author_exp(commit)))
-        data['rexp'].append(gc.get_author_recent_exp(commit))
-        data['sexp'].append(gc.get_author_subssys_exp(commit))
-        data['pod'].append(gc.get_author_proportion(commit))
-        data['fix'].append(commit in fix_commits)
-        data['buggy'].append(commit in bug_commits)
+        row['commit'] = commit if not row.get('commit') else row['commit']
+        if not row.get('la') or not row.get('ld'):
+            la, ld = gc.get_numstat(commit)
+            row['la'] = la
+            row['ld'] = ld
+        if not row.get('ns') or not row.get('nd') or not row.get('nf'):
+            fnames = gc.get_changed_filenames(commit)
+            if not row.get('ns'):
+                row['ns'] = len(get_subsys(fnames))
+            if not row.get('nd'):
+                row['nd'] = len(get_dir(fnames))
+            if not row.get('nf'):
+                row['nf'] = len(fnames)
+        if not row.get('nuc') or not row.get('ndev'):
+            hset, anset = gc.get_former_commits(commit)
+            row['nuc'] = len(hset)
+            row['ndev'] = len(anset)
+        if not row.get('inter'):
+            row['inter'] = gc.get_aver_interval(commit)
+        if not row.get('ent'):
+            row['ent'] = gc.get_entropy(commit)
+        if not row.get('exp'):
+            row['exp'] = len(gc.get_author_exp(commit))
+        if not row.get('rexp'):
+            row['rexp'] = gc.get_author_recent_exp(commit)
+        if not row.get('sexp'):
+            row['sexp'] = gc.get_author_subssys_exp(commit)
+        if not row.get('pod'):
+            row['pod'] = gc.get_author_proportion(commit)
+        if not row.get('fix'):
+            row['fix'] = commit in fix_commits
+        if not row.get('buggy'):
+            row['buggy'] = commit in bug_commits
+        if not row.get('time'):
+            row['time'] = gc.get_author_time(commit)
 
-    df = pd.DataFrame(data)
-    df.to_csv(tgt_csv, index=False)
+        rows.append(row)
+
+    new_df = pd.DataFrame(rows)
+    new_df.to_csv(tgt_csv, index=False)
 
 
 def create_contract_datasets(platform_csv: Path,
                              saved_dir: Path,
-                             force: bool):
+                             inc: bool):
     """ Create csv datasets for smart contracts.
 
     Args:
         platform_csv (Path): path to `platform.csv`
         saved_dir (Path): where to put newly created csv files
-        force (bool): force to re-collect or not
+        inc (bool): run in incremental mode
     """
     df = pd.read_csv(platform_csv, index_col=False)
     for _, row in df.iterrows():
@@ -169,23 +197,22 @@ def create_contract_datasets(platform_csv: Path,
         bjson = plat_dir / f'{plat}_buggy_commits.json'
         mcsv = plat_dir / f'{plat}_matrix.csv'
 
-        if _do_all_data_exist([fcsv, bjson, mcsv]) and not force:
+        if _do_all_data_exist([fcsv, bjson, mcsv]) and not inc:
             logger.info(f'All files related to {plat} smart contract exist.')
             continue
 
         with GitCommit(git_addr) as gc:
-            if force or not fcsv.exists():
+            if not fcsv.exists():
                 logger.info(f'Get bug-fixed commit data from {plat}')
                 create_fix_commit_csv(gc, fcsv)
             else:
-                logger.info(f'Data exists. Skip collect data {fcsv}.')
+                logger.info(f'Data exists. Skip collect data {fcsv}')
 
-            if force or not bjson.exists():
+            if not bjson.exists():
                 logger.info(f'Get buggy commits data from {plat}')
                 create_bug_commit_json(gc, fcsv, bjson)
             else:
                 logger.info(f'Data exists. Skip collect data {bjson}')
 
-            if force or not mcsv.exists():
-                logger.info(f'Get git matrixes from {plat}')
-                create_git_matrix_csv(gc, fcsv, mcsv)
+            logger.info(f'Get git matrixes from {plat}')
+            create_git_matrix_csv(gc, fcsv, mcsv)

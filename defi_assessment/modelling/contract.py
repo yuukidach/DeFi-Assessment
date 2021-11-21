@@ -16,6 +16,7 @@ from imblearn.over_sampling import SMOTE
 
 def get_dataset(src: Path):
     df = pd.read_csv(src)
+    df.drop(['time', 'plat'], axis=1, inplace=True)
     train, test = train_test_split(df, test_size=0.3)
     print(f'Status of train set:\n{train["buggy"].value_counts()}')
     print(f'Status of test set:\n{test["buggy"].value_counts()}')
