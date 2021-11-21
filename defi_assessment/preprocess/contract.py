@@ -188,31 +188,44 @@ def rm_special_words(txt: str) -> str:
     return txt
 
 
+def get_clean_log(txt: str):
+    txt = get_valid_log_content(txt)
+    txt = rm_special_words(txt)
+    return txt
+
+
 def pre_process(p: Path):
     logger.info("Start reading matrix.csv...")
     fnames = find_data_file(p, '_matrix.csv')
     matrix_df = read_data(fnames)
-    matrix_df.dropna(inplace=True)
-    matrix_df.drop(['plat'], axis=1, inplace=True)
+    matrix_df['plat'] = matrix_df['plat'].apply(
+        lambda x: re.sub(r'(_matrix$)', '', x)
+    )
+    print(matrix_df.head())
 
     logger.info('Start reading commits.json...')
     fnames = find_data_file(p, 'commits.json')
     commit_df = read_data(fnames, 'json')
-    commit_df.dropna(inplace=True)
     commit_df['text'] = commit_df['changes'].apply(
-        lambda x: rm_special_words(x)
+        lambda x: get_clean_log(x)
     )
-    commit_df.drop(['msg', 'plat', 'changes'], axis=1, inplace=True)
+    commit_df.drop(['msg', 'changes'], axis=1, inplace=True)
+    commit_df['plat'] = commit_df['plat'].apply(
+        lambda x: re.sub(r'(_buggy_commits$)', '', x)
+    )
+    print(commit_df.head())
 
     logger.info('Data pre-processing...')
     cv = CountVectorizer()
     cv_fit = cv.fit_transform(commit_df['text'].tolist())
     commit_df['nw'] = cv_fit.toarray().sum(axis=1)
 
-    idx = cv.get_feature_names().index('function')
+    idx = cv.get_feature_names_out().tolist().index('function')
     commit_df['nfunc'] = cv_fit.toarray()[:, idx]
 
-    df = pd.merge(matrix_df, commit_df, on=['commit', 'buggy'])
+    df = pd.merge(matrix_df, commit_df, on=['commit', 'plat', 'buggy'])
     df.drop(['text'], axis=1, inplace=True)
+    df.dropna(inplace=True)
+    print(df.head())
 
     return df

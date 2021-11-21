@@ -10,6 +10,8 @@ A prototype project to perform risk assessment on different DeFi lending platfor
 
 - [DeFi Assessement (dass)](#defi-assessement-dass)
   - [Overview](#overview)
+    - [Web Page](#web-page)
+    - [Command-line Tool](#command-line-tool)
   - [Installation](#installation)
   - [Usage](#usage)
     - [Data collection](#data-collection)
@@ -22,7 +24,13 @@ A prototype project to perform risk assessment on different DeFi lending platfor
 
 ## Overview
 
+### Web Page
+
 ![](./docs/res/index.png)
+
+### Command-line Tool
+
+![](./docs/res/data_collection.png)
 
 ## Installation
 
@@ -70,13 +78,15 @@ data -> process -> train -> web
 
 To collect data for smart contracts, `docs/platforms.csv` shoud be used. This file provides the github repository link for different smart contracts. And it also provide intermediary status for corresponding platforms.
 
+This command will **NOT** overwrite any existing data. Users can use `--inc` option to collect data in incremental mode, which means new records and new attributes will be collected. And old data still exists.
+
 ### Data process
 
 `process` command is aimed to process raw data. Currently, only sart contract data need to be processed after collection.
 
 ### Model Training
 
-`train` command is simple. It trains 2 models. One for smart contracts and the other for financial risks.
+`train` command is simple. It trains 2 models. A Random Forest model for smart contracts and a LSTM mdoel for financial risks.
 
 ### Web Application
 

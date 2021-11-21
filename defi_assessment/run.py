@@ -12,7 +12,7 @@ app = Flask(__name__, template_folder='app/templates')
 app.config['SECRET_KEY'] = 'some_random_secret'
 
 INDEX_DATA = get_table_data(Path('docs/platforms.csv'),
-                            Path('data/contract/final.csv'),
+                            Path('data/contract/contract_overview.csv'),
                             Path('models/random_forest.joblib'))
 
 

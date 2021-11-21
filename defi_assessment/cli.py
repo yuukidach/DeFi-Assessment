@@ -14,7 +14,8 @@ def cli():
 
 
 @click.command()
-@click.option('-f', '--force', is_flag=True, help='Force to collect data')
+@click.option('-i', '--inc', is_flag=True,
+              help='Collect data in incremental mode.')
 @click.option('--contract/--no-contract', default=True,
               help='Collect data of smart contracts.')
 @click.option('--finance/--no-finance', default=True,
@@ -25,7 +26,7 @@ def cli():
 @click.option('-t', '--target', type=click.Path(),
               default=Path.cwd() / 'data/',
               help='Target directory to put collected data')
-def data_collection(force, contract, finance, source, target):
+def data_collection(inc, contract, finance, source, target):
     """Collect raw data.
 
     Collect data for smart contract risks and financial risks. Three folders
@@ -35,18 +36,19 @@ def data_collection(force, contract, finance, source, target):
     target = Path(target)
     if contract:
         tgt_folder = target/'contract'
-        create_contract_datasets(source, tgt_folder, force)
+        create_contract_datasets(source, tgt_folder, inc)
     if finance:
-        create_finance_datasets(target, force)
+        create_finance_datasets(target, inc)
 
 
 @click.command()
-@click.option('-f', '--force', is_flag=True, help='Force to collect data')
+@click.option('-f', '--force', is_flag=True,
+              help='Force to reproduce processed data')
 @click.option('-s', '--source', type=click.Path(exists=True),
               default=Path.cwd() / 'data/contract',
               help='Directory of collected data')
 @click.option('-t', '--target', type=click.Path(),
-              default=(Path.cwd() / 'data/contract/final.csv'),
+              default=(Path.cwd() / 'data/contract/contract_overview.csv'),
               help='Location to put newly created csv file.')
 def data_process(force, source, target):
     """Process the data related to smart contracts.
@@ -73,7 +75,7 @@ def train_model(source, target):
     """
     source = Path(source)
     target = Path(target)
-    contract.train(source / 'contract/final.csv', target)
+    contract.train(source / 'contract/contract_overview.csv', target)
     finance.train(source, target)
 
 

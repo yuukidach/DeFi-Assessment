@@ -1,5 +1,7 @@
+import datetime
 import pandas as pd
 import numpy as np
+from time import mktime
 from pathlib import Path
 from typing import List, Dict
 from defi_assessment.modelling import contract, finance
@@ -12,6 +14,11 @@ COLUMNS = [
     {'field': 'cen', 'title': 'Intermediary Score', 'sortable': True},
     {'field': 'total', 'title': 'Total score', 'sortable': True}
 ]
+
+
+def format_score(score):
+    score = round(score, 2)
+    return str(score) + '%'
 
 
 def get_contract_row_data(commit: str, df: pd.DataFrame) -> np.array:
@@ -30,21 +37,31 @@ def get_contract_row_data(commit: str, df: pd.DataFrame) -> np.array:
         shape:(1, 16)
     """
     df1 = df.loc[df['commit'] == commit]
-    df1 = df1.drop(['commit', 'buggy'], axis=1)
+    df1 = df1.drop(['commit', 'buggy', 'time', 'plat'], axis=1)
     a = df1.iloc[0].to_numpy().reshape((1, -1))
     return a
 
 
-def format_score(score):
-    score = round(score, 2)
-    return str(score) + '%'
+def get_contract_score(plat: str, df: pd.DataFrame, mpath: Path) -> float:
+    days_ago = datetime.datetime.now() - datetime.timedelta(30)
+    days_ago = mktime(days_ago.timetuple())
 
+    df = df.query(f'plat == "{plat}"')
+    df.sort_values(by='time', inplace=True, ascending=False)
+    df = df.iloc[:10, :]
+    valid_df = df[df['time'] > days_ago]
 
-def get_contract_score(commit: str, df: pd.DataFrame, mpath: Path) -> float:
-    x = get_contract_row_data(commit, df)
-    prob = contract.predict_prob(x, mpath)
-    score = (1 - prob[0]) * 100
-    return format_score(score)
+    if valid_df.shape[0] == 0:
+        valid_df = df.iloc[:3, :]
+    print(valid_df)
+    valid_df = valid_df.drop(['commit', 'buggy', 'time', 'plat'], axis=1)
+
+    probs = contract.predict_prob(valid_df, mpath)
+    probs = (1 - probs) * 100
+    vfunc = np.vectorize(lambda x: x if x > 40 else 0)
+    probs = vfunc(probs)
+
+    return format_score(probs.mean())
 
 
 def get_intermediary_score(oracle: int, admin: int) -> float:
@@ -100,8 +117,8 @@ def get_table_data(src: Path, ref: Path, ctx_mpath: Path) -> List[Dict]:
     fin_scores = finance.get_finance_scores()
     for _, row in df.iterrows():
         name = row['platform']
-        commit = row['commit']
-        ctx_score = get_contract_score(commit, ref_df, ctx_mpath)
+        # ctx_score = get_contract_score(commit, ref_df, ctx_mpath)
+        ctx_score = get_contract_score(name, ref_df, ctx_mpath)
         cen_score = get_intermediary_score(row['oracle'], row['admin'])
         fin_score = format_score(fin_scores.get(name, 0)*100)
         total_score = get_total_score(ctx_score, cen_score, fin_score)
