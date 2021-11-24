@@ -86,7 +86,7 @@ def build_web(port):
     """Create a simple local website to view the result.
     """
     from defi_assessment.run import app
-    app.run(port=port, debug=False)
+    app.run(port=port, debug=False, host='0.0.0.0')
 
 
 cli.add_command(data_collection, 'data')
