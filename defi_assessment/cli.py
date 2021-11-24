@@ -3,7 +3,7 @@ from pathlib import Path
 from defi_assessment.data_collection.contract import create_contract_datasets
 from defi_assessment.data_collection.finance import create_finance_datasets
 from defi_assessment.preprocess.contract import pre_process
-from defi_assessment.modelling import contract, finance
+from defi_assessment.modelling import contract
 from defi_assessment import __version__
 
 
@@ -73,6 +73,7 @@ def train_model(source, target):
     A Random Forest model for smart contract and a LSTM model for financial
     risks.
     """
+    from defi_assessment.modelling import finance
     source = Path(source)
     target = Path(target)
     contract.train(source / 'contract/contract_overview.csv', target)
