@@ -3,10 +3,9 @@ This file is to build model for finance factors.
 '''
 
 from sklearn.preprocessing import MinMaxScaler
-from keras.models import Sequential
-from keras.layers import Dense, LSTM
-from keras.callbacks import Callback
-from keras.models import load_model
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.layers import Dense, LSTM
+from tensorflow.keras.callbacks import Callback
 from textblob import TextBlob
 from pathlib import Path
 import matplotlib.pyplot as plt
